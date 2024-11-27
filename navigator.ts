@@ -37,12 +37,10 @@ namespace microcode {
         }
 
         public addButtons(btns: Button[]) {
-            basic.showNumber(9)
             this.buttonGroups.push(btns)
         }
 
         public screenToButton(x: number, y: number): Button {
-            basic.showNumber(2)
             const p = new Vec2(x, y)
             for (let row = 0; row < this.buttonGroups.length; row++) {
                 const buttons = this.buttonGroups[row]
@@ -55,7 +53,6 @@ namespace microcode {
                     return target
                 }
             }
-            basic.showNumber(3)
             return undefined
         }
 
@@ -168,9 +165,7 @@ namespace microcode {
         }
 
         public addButtons(btns: Button[]) {
-            basic.showNumber(0)
             this.buttonGroups.push(btns)
-            basic.showNumber(1)
         }
 
         public move(dir: CursorDir) {

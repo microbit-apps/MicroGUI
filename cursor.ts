@@ -41,6 +41,7 @@ namespace microcode {
             this.moveDest = new Vec2()
             this.setSize()
             
+            this.setAriaContent("", this.moveDest)
             this.cursorOutlineColour = DEFAULT_CURSOR_OUTLINE_COLOUR
         }
 

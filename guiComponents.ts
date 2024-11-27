@@ -23,16 +23,18 @@ namespace microcode {
      * A GUI Component has a .context for storage of hidden component state.
      */
     abstract class GUIComponentAbstract extends Scene {
-        public static DEFAULT_WIDTH: number = screen().width / 2;
-        public static DEFAULT_HEIGHT: number = screen().height / 2;
+        public static DEFAULT_WIDTH: number = screen().width >> 1;
+        public static DEFAULT_HEIGHT: number = screen().height >> 1;
+        
+        protected isActive: boolean;
+        protected isHidden: boolean;
 
-        private hidden: boolean;
         protected context: any[];
-        private alignment: GUIComponentAlignment
 
         protected bounds: Bounds;
         protected backgroundColour: number = 3;
 
+        private alignment: GUIComponentAlignment
         private xScaling: number = 1.0;
         private yScaling: number = 1.0;
 
@@ -42,12 +44,12 @@ namespace microcode {
         private unscaledComponentHeight: number;
         private hasBorder: boolean
 
-        public nav: INavigator;
-
         constructor(opts: {
             alignment: GUIComponentAlignment,
             width: number,
             height: number,
+            isActive: boolean,
+            isHidden?: boolean,
             xOffset?: number,
             yOffset?: number,
             xScaling?: number,
@@ -57,7 +59,12 @@ namespace microcode {
         }) {
             super()
 
-            this.alignment = opts.alignment
+            this.alignment = opts.alignment;
+
+            this.isActive = opts.isActive
+            this.isHidden = (opts.isHidden != null) ? opts.isHidden : false
+
+            this.context = []
 
             this.xScaling = (opts.xScaling) ? opts.xScaling : this.xScaling
             this.yScaling = (opts.yScaling) ? opts.yScaling : this.yScaling
@@ -66,6 +73,7 @@ namespace microcode {
 
             this.xOffset = (opts.xOffset != null) ? opts.xOffset : 0
             this.yOffset = (opts.yOffset != null) ? opts.yOffset : 0
+            
             this.unscaledComponentWidth = opts.width
             this.unscaledComponentHeight = opts.height
             this.hasBorder = (opts.border != null) ? opts.border : false
@@ -82,21 +90,18 @@ namespace microcode {
             })
         }
 
-        hide(): void { this.hidden = true }
-        unHide(): void { this.hidden = false }
+        public get width() { return this.unscaledComponentWidth * this.xScaling }
+        public get height() { return this.unscaledComponentHeight * this.yScaling }
+        public get active() { return this.isActive }
+        public get hidden() { return this.isHidden }
+
+        makeActive(): void { this.isActive = true }
+        unmakeActive(): void { this.isActive = false }
+
+        hide(): void { this.isHidden = true }
+        unHide(): void { this.isHidden = false }
 
         getAlignment(): number { return this.alignment }
-        isHidden(): boolean { return this.hidden }
-
-
-        printCenter(text: string) {
-            const textOffset = (font.charWidth * text.length) / 2
-            screen().print(
-                text,
-                (screen().width / 2) + this.bounds.left + ((this.unscaledComponentWidth * this.xScaling) / 2) - textOffset,
-                (screen().height / 2) + this.bounds.top + 1
-            )
-        }
 
         /**
          * This should be overriden.
@@ -104,6 +109,8 @@ namespace microcode {
          * @returns pertinent component state information, in appropriate format; at child components discretion.
          */
         getContext(): any[] {return this.context}
+
+        addContext(newContext: any[]) {this.context.push(newContext)}
 
         clearContext(): void { this.context = [] }
         setBounds(bounds: Bounds): void { this.bounds = bounds }
@@ -114,48 +121,48 @@ namespace microcode {
 
             switch (this.alignment) {
                 case (GUIComponentAlignment.TOP): {
-                    left = -((this.unscaledComponentWidth * this.xScaling) / 2) + this.xOffset;
-                    top = -(screen().height / 2) + this.yOffset;
+                    left = -((this.unscaledComponentWidth * this.xScaling) >> 1) + this.xOffset;
+                    top = -(screen().height >> 1) + this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.LEFT): {
-                    left = -(screen().width / 2) + this.xOffset;
-                    top = -((this.unscaledComponentHeight * this.yScaling) / 2) + this.yOffset
+                    left = -(screen().width >> 1) + this.xOffset;
+                    top = -((this.unscaledComponentHeight * this.yScaling) >> 1) + this.yOffset
                     break;
                 }
                 case (GUIComponentAlignment.RIGHT): {
-                    left = (screen().width / 2) - (this.unscaledComponentWidth * this.xScaling) + this.xOffset;
-                    top = -((this.unscaledComponentHeight * this.yScaling) / 2) + this.yOffset
+                    left = (screen().width >> 1) - (this.unscaledComponentWidth * this.xScaling) + this.xOffset;
+                    top = -((this.unscaledComponentHeight * this.yScaling) >> 1) + this.yOffset
                     break;
                 }
                 case (GUIComponentAlignment.BOT): {
-                    left = -((this.unscaledComponentWidth * this.xScaling) / 2) + this.xOffset;
-                    top = (screen().height / 2) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
+                    left = -((this.unscaledComponentWidth * this.xScaling) >> 1) + this.xOffset;
+                    top = (screen().height >> 1) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.CENTRE): {
-                    left = -((this.unscaledComponentWidth * this.xScaling) / 2) + this.xOffset
-                    top = -((this.unscaledComponentHeight * this.yScaling) / 2) + this.yOffset
+                    left = -((this.unscaledComponentWidth * this.xScaling) >> 1) + this.xOffset
+                    top = -((this.unscaledComponentHeight * this.yScaling) >> 1) + this.yOffset
                     break;
                 }
                 case (GUIComponentAlignment.TOP_RIGHT): {
-                    left = ((screen().width / 2) - (this.unscaledComponentWidth * this.xScaling)) + this.xOffset;
-                    top = -(screen().height / 2) + this.yOffset;
+                    left = ((screen().width >> 1) - (this.unscaledComponentWidth * this.xScaling)) + this.xOffset;
+                    top = -(screen().height >> 1) + this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.TOP_LEFT): {
-                    left = (-(screen().width / 2)) + this.xOffset;
-                    top = -(screen().height / 2) + this.yOffset;
+                    left = (-(screen().width >> 1)) + this.xOffset;
+                    top = -(screen().height >> 1) + this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.BOT_RIGHT): {
-                    left = ((screen().width / 2) - (this.unscaledComponentWidth * this.xScaling)) + this.xOffset;
-                    top = (screen().height / 2) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
+                    left = ((screen().width >> 1) - (this.unscaledComponentWidth * this.xScaling)) + this.xOffset;
+                    top = (screen().height >> 1) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.BOT_LEFT): {
-                    left = (-(screen().width / 2)) + this.xOffset;
-                    top = (screen().height / 2) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
+                    left = (-(screen().width >> 1)) + this.xOffset;
+                    top = (screen().height >> 1) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
                     break;
                 }
             }
@@ -178,9 +185,9 @@ namespace microcode {
 
         draw(): void {
             screen().fillRect(
-                this.bounds.left + (screen().width / 2),
-                this.bounds.top + (screen().height / 2) + 2,
-                this.bounds.width + 2,
+                this.bounds.left + (screen().width >> 1) + 2,
+                this.bounds.top + (screen().height >> 1) + 2,
+                this.bounds.width,
                 this.bounds.height,
                 15
             )
@@ -189,254 +196,93 @@ namespace microcode {
         }
     }
 
-
-    export class B extends GUIComponentAbstract {
-        public cursor: Cursor
-        public picker: Picker
-        public navigator: INavigator
-        private btns: Button[];
+    export class TextBox extends GUIComponentAbstract {
         private title: string;
+        private maxCharactersPerLine: number;
+        private textChunks: string[];
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
-            width: number,
-            height: number,
-            xOffset?: number,
-            yOffset?: number,
-            scaling?: number,
-            colour?: number,
-            title?: string,
-        }) {
-            super(opts)
-
-            this.btns = [];
-            this.title = (opts.title != null) ? opts.title : ""
-            this.navigator = new microcode.GridNavigator(3, 4)
-
-            this.startup()
-        }
-
-        /* override */ startup() {
-            super.startup()
-
-            let x = (screen().width / 5) - (screen().width / 2);
-            let y = -30;
-            for (let i = 0; i < 3; i++) {
-                for (let j = 0; j < 4; j++) {
-                    this.btns.push(new Button({
-                        parent: null,
-                        style: ButtonStyles.Transparent,
-                        icon: "" + ((i * 4) + j + 1),
-                        x,
-                        y,
-                        onClick: (button: Button) => { }
-                    }))
-                    x += screen().width / 5
-                }
-                y += screen().height / 4
-                x = (screen().width / 5) - (screen().width / 2);
-            }
-
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.right.id,
-                () => this.moveCursor(CursorDir.Right)
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.up.id,
-                () => this.moveCursor(CursorDir.Up)
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.down.id,
-                () => this.moveCursor(CursorDir.Down)
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.left.id,
-                () => this.moveCursor(CursorDir.Left)
-            )
-
-            // click
-            const click = () => this.cursor.click()
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.A.id,
-                click
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.A.id + keymap.PLAYER_OFFSET,
-                click
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.B.id,
-                () => this.back()
-            )
-
-            this.cursor.navigator = this.navigator
-            this.navigator.addButtons(this.btns)
-
-            this.cursor = new Cursor()
-            this.picker = new Picker(this.cursor)
-
-            if (this.navigator == null)
-                this.navigator = new RowNavigator()
-            this.cursor.navigator = this.navigator
-        }
-
-        draw() {
-            Screen.fillRect(
-                Screen.LEFT_EDGE,
-                Screen.TOP_EDGE,
-                Screen.WIDTH,
-                Screen.HEIGHT,
-                0xc
-            )
-
-            this.printCenter(this.title)
-
-            // if (this.picker == null || this.cursor == null) {
-            //     basic.showString("Y")
-            // }
-
-            // this.picker.draw()
-            // this.cursor.draw()
-
-            // for (let i = 0; i < this.btns.length; i++)
-            //     this.btns[i].draw()
-
-            super.draw()
-        }
-
-        protected moveCursor(dir: CursorDir) {
-            try {
-                this.moveTo(this.cursor.move(dir))
-            } catch (e) {
-                if (dir === CursorDir.Up && e.kind === BACK_BUTTON_ERROR_KIND)
-                    this.back()
-                else if (
-                    dir === CursorDir.Down &&
-                    e.kind === FORWARD_BUTTON_ERROR_KIND
-                )
-                    return
-                else throw e
-            }
-        }
-
-        protected moveTo(target: Button) {
-            if (!target) return
-            this.cursor.moveTo(
-                target.xfrm.worldPos,
-                target.ariaId,
-                target.bounds
-            )
-        }
-
-        back() {
-            if (!this.cursor.cancel()) this.moveCursor(CursorDir.Back)
-        }
-
-        protected handleClick(x: number, y: number) {
-            const target = this.cursor.navigator.screenToButton(
-                x - Screen.HALF_WIDTH,
-                y - Screen.HALF_HEIGHT
-            )
-            if (target) {
-                this.moveTo(target)
-                target.click()
-            } else if (this.picker.visible) {
-                this.picker.hide()
-            }
-        }
-
-        protected handleMove(x: number, y: number) {
-            const btn = this.cursor.navigator.screenToButton(
-                x - Screen.HALF_WIDTH,
-                y - Screen.HALF_HEIGHT
-            )
-            if (btn) {
-                const w = btn.xfrm.worldPos
-                this.cursor.snapTo(w.x, w.y, btn.ariaId, btn.bounds)
-                btn.reportAria(true)
-            }
-        }
-
-        /* override */ shutdown() {
-            this.navigator.clear()
-        }
-
-        /* override */ activate() {
-            super.activate()
-            const btn = this.navigator.initialCursor(0, 0)
-            if (btn) {
-                const w = btn.xfrm.worldPos
-                this.cursor.snapTo(w.x, w.y, btn.ariaId, btn.bounds)
-                btn.reportAria(true)
-            }
-        }
-
-        /* override */ update() {
-            this.cursor.update()
-        }
-    }
-
-    export class GUIBox extends GUIComponentAbstract {
-        // private btns: Button[]
-        private title: string
-
-        constructor(opts: {
-            alignment: GUIComponentAlignment,
+            isActive: boolean,
+            isHidden?: boolean,
             xOffset?: number,
             yOffset?: number,
             xScaling?: number,
             yScaling?: number,
             colour?: number,
             border?: boolean,
-            title?: string
+            title?: string,
+            text?: string | string[]
         }) {
             super({
                 alignment: opts.alignment,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
-                width: GUIBox.DEFAULT_WIDTH,
-                height: GUIBox.DEFAULT_HEIGHT,
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
+                width: TextBox.DEFAULT_WIDTH,
+                height: TextBox.DEFAULT_HEIGHT,
                 xScaling: opts.xScaling,
                 yScaling: opts.yScaling,
                 colour: opts.colour,
                 border: opts.border
             })
 
-            // this.btns = [
-            //     new microcode.Button({
-            //         icon: "",
-            //         x: -(10 * ((opts.xOffset != null) ? opts.xOffset : 1)),
-            //         y: -30
-            //     })
-            // ]
-
             this.title = (opts.title != null) ? opts.title : ""
+            this.maxCharactersPerLine = this.width / (font.charWidth + 1)
 
-            // this.nav = new microcode.GridNavigator(3, 4)
-            // this.nav.addButtons(this.btns)
+            if (opts.text == null) {
+                this.textChunks = [""]
+            }
+
+            else if (typeof(opts.text) === 'string') {
+                this.textChunks = [];
+
+                for (let i = 0; i < opts.text.length; i += this.maxCharactersPerLine) {
+                    this.textChunks.push(opts.text.slice(i, i + this.maxCharactersPerLine));
+                }
+            }
+
+            else {
+                this.textChunks = opts.text
+            }
         }
 
         draw() {
             super.draw()
-            this.printCenter(this.title)
+            // this.printCenter(this.text)
+
+            const titleOffset = (font.charWidth * this.title.length) >> 1;
+
+            screen().print(
+                this.title,
+                (screen().width >> 1) + this.bounds.left + (this.width >> 1) - titleOffset,
+                (screen().height >> 1) + this.bounds.top + 2
+            )
 
 
+            let yOffset = 12;
+            this.textChunks.forEach(textChunk => {
+                const textOffset = (font.charWidth * textChunk.length) >> 1
+                screen().print(
+                    textChunk,
+                    (screen().width >> 1) + this.bounds.left + (this.width >> 1) - textOffset,
+                    (screen().height >> 1) + this.bounds.top + 2 + yOffset
+                )
+
+                yOffset += 10
+            })
         }
     }
 
-    export class GUISlider extends GUIBox {
+    export class GUISlider extends TextBox {
         private maximum: number;
         private minimum: number;
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
+            isActive: boolean,
+            isHidden?: boolean,
             xOffset?: number,
             yOffset?: number,
             xScaling?: number,
@@ -449,6 +295,8 @@ namespace microcode {
         }) {
             super({
                 alignment: opts.alignment,
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
                 xScaling: opts.xScaling,
@@ -479,18 +327,18 @@ namespace microcode {
             super.draw()
 
             // screen().fillRect(
-            //     // this.bounds.left + (this.bounds.width / 2) - (this.bounds.width / 10),
-            //     this.bounds.left + (this.bounds.width / 2) + (screen().width / 2) - 10,
-            //     this.bounds.top + this.bounds.height + (this.bounds.height * (this.getContext()[0] / this.maximum)),// + (screen().height / 2),
+            //     // this.bounds.left + (this.bounds.width >> 1) - (this.bounds.width / 10),
+            //     this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - 10,
+            //     this.bounds.top + this.bounds.height + (this.bounds.height * (this.getContext()[0] / this.maximum)),// + (screen().height >> 1),
             //     20,
             //     10,
             //     15
             // )
 
             screen().fillRect(
-                // this.bounds.left + (this.bounds.width / 2) - (this.bounds.width / 10),
-                this.bounds.left + (this.bounds.width / 2) + (screen().width / 2) - 10,
-                // this.bounds.top - 10 + (this.bounds.height / (this.getContext()[0] / this.maximum)) + (screen().height / 2),
+                // this.bounds.left + (this.bounds.width >> 1) - (this.bounds.width / 10),
+                this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - 10,
+                // this.bounds.top - 10 + (this.bounds.height / (this.getContext()[0] / this.maximum)) + (screen().height >> 1),
                 this.bounds.top + (this.bounds.height * (this.maximum / this.getContext()[0])) + 15,
                 20,
                 10,
@@ -498,8 +346,8 @@ namespace microcode {
             )
 
             screen().fillRect(
-                this.bounds.left + (this.bounds.width / 2) - 3 + (screen().width / 2),
-                this.bounds.top + (screen().height / 2),
+                this.bounds.left + (this.bounds.width >> 1) - 3 + (screen().width >> 1),
+                this.bounds.top + (screen().height >> 1),
                 6,
                 this.bounds.height - 4,
                 15
@@ -507,12 +355,14 @@ namespace microcode {
         }
     }
 
-    export class GUIGraph extends GUIBox {
+    export class GUIGraph extends TextBox {
         private graphableFns: GraphableFunction[]
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
             graphableFns: GraphableFunction[],
+            isActive: boolean,
+            isHidden?: boolean,
             xOffset?: number,
             yOffset?: number,
             xScaling?: number,
@@ -523,6 +373,8 @@ namespace microcode {
         }) {
             super({
                 alignment: opts.alignment,
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
                 xScaling: opts.xScaling,
@@ -532,6 +384,8 @@ namespace microcode {
             })
 
             this.graphableFns = opts.graphableFns
+            const bufferScalar = (opts.xScaling != null) ? opts.xScaling : 1
+            this.graphableFns.forEach(gf => gf.setBufferSize(60 * bufferScalar))
         }
 
         draw() {
@@ -548,7 +402,7 @@ namespace microcode {
 
             for (let i = 0; i < this.graphableFns.length; i++) {
                 const hasSpace = this.graphableFns[i].getBufferLength() < this.graphableFns[i].getMaxBufferSize()
-                this.graphableFns[i].readIntoBufferOnce((screen().height / 2) + top, this.bounds.height) // 8
+                this.graphableFns[i].readIntoBufferOnce((screen().height >> 1) + top, this.bounds.height) // 8
             }
 
             //----------------------------
@@ -560,22 +414,23 @@ namespace microcode {
 
                 // Draw lines:
                 sensor.draw(
-                    (screen().width / 2) + left + 3,
+                    (screen().width >> 1) + left + 3,
                     color,
                 )
 
                 // Draw the latest reading on the right-hand side as a Ticker if at no-zoom:
                 if (sensor.getHeightNormalisedBufferLength() > 0) {
-                    const reading = sensor.getReading()
+                    const reading = sensor.getNthReading(sensor.getBufferLength() - 1);
+                    const readingAsString = reading.toString().slice(0, 5);
                     const range = Math.abs(sensor.getMinimum()) + sensor.getMaximum()
                     const y = Math.round(this.bounds.height - (this.bounds.height * ((reading - sensor.getMinimum()) / range)))
 
                     // Make sure the ticker won't be cut-off by other UI elements
                     // if (y > sensor.getMinimum() + 5) {
                         screen().print(
-                            sensor.getNthReading(sensor.getBufferLength() - 1).toString().slice(0, 5),
-                            this.bounds.left + this.bounds.width + (screen().width / 2) - 4,
-                            y + top + this.bounds.height - 7,
+                            readingAsString,
+                            this.bounds.left + this.bounds.width + (screen().width >> 1) - (readingAsString.length * font.charWidth),
+                            y + top + this.bounds.height - 4,
                             color,
                             bitmaps.font5,
                         )
@@ -594,19 +449,19 @@ namespace microcode {
             for (let i = 0; i < 2; i++) {
                 // X-Axis:
                 screen().drawLine(
-                    left + (screen().width / 2),
-                    (screen().height / 2) + top + this.bounds.height + i,
-                    left + this.bounds.width + (screen().width / 2),
-                    (screen().height / 2) + top + this.bounds.height + i,
+                    left + (screen().width >> 1),
+                    (screen().height >> 1) + top + this.bounds.height + i,
+                    left + this.bounds.width + (screen().width >> 1),
+                    (screen().height >> 1) + top + this.bounds.height + i,
                     5
                 );
 
                 // Y-Axis:
                 screen().drawLine(
-                    left + (screen().width / 2) + i,
-                    (screen().height / 2) + top,
-                    left + (screen().width / 2) + i, 
-                    (screen().height / 2) + this.bounds.height + top,
+                    left + (screen().width >> 1) + i,
+                    (screen().height >> 1) + top,
+                    left + (screen().width >> 1) + i, 
+                    (screen().height >> 1) + this.bounds.height + top,
                     5
                 );
             }
@@ -639,8 +494,8 @@ namespace microcode {
             // Start
             screen().print(
                 this.graphableFns[0].numberOfReadings.toString(),
-                (screen().width / 2) + this.bounds.left,
-                this.bounds.top + this.bounds.height + (screen().height / 2) + 3,
+                (screen().width >> 1) + this.bounds.left,
+                this.bounds.top + this.bounds.height + (screen().height >> 1) + 3,
                 1
             )
 
@@ -648,8 +503,8 @@ namespace microcode {
             const end: string = (this.graphableFns[0].numberOfReadings + this.graphableFns[0].getHeightNormalisedBufferLength()).toString()
             screen().print(
                 end,
-                (screen().width / 2) + this.bounds.left + this.bounds.width - (end.length * font.charWidth) + 2,
-                this.bounds.top + this.bounds.height + (screen().height / 2) + 3,
+                (screen().width >> 1) + this.bounds.left + this.bounds.width - (end.length * font.charWidth) + 2,
+                this.bounds.top + this.bounds.height + (screen().height >> 1) + 3,
                 1
             )
             basic.pause(100);
@@ -664,21 +519,25 @@ namespace microcode {
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
+            navigator: INavigator,
+            isActive: boolean,
+            isHidden: boolean,
             xOffset?: number,
             yOffset?: number,
             width: number,
             height: number,
             xScaling?: number,
             yScaling?: number,
-            colour?: number,
-            navigator?: INavigator
+            colour?: number
         }) {
             super({
                 alignment: opts.alignment,
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
-                width: GUIBox.DEFAULT_WIDTH,
-                height: GUIBox.DEFAULT_HEIGHT,
+                width: TextBox.DEFAULT_WIDTH,
+                height: TextBox.DEFAULT_HEIGHT,
                 xScaling: opts.xScaling,
                 yScaling: opts.yScaling,
                 colour: opts.colour
@@ -830,6 +689,8 @@ namespace microcode {
         constructor(opts: {
             next: (arg0: string) => void,
             alignment: GUIComponentAlignment,
+            isActive: boolean,
+            isHidden: boolean,
             xOffset?: number,
             yOffset?: number,
             xScaling?: number,
@@ -841,6 +702,9 @@ namespace microcode {
 
             super({
                 alignment: opts.alignment,
+                navigator: new GridNavigator(5, 5, KeyboardComponent.WIDTHS),
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
                 width: KeyboardComponent.DEFAULT_WIDTH,
@@ -886,7 +750,7 @@ namespace microcode {
                             style: ButtonStyles.Transparent,
                             icon: bitmaps.create(10, 10),
                             ariaId: "",
-                            x: (xDiff * (j + 1)) - (screen().width / 2),
+                            x: (xDiff * (j + 1)) - (screen().width >> 1),
                             y: (13 * (i + 1)) - 18,
                             onClick: defaultBehaviour,
                             state: [(i * 10) + j]
@@ -925,7 +789,7 @@ namespace microcode {
                         style: ButtonStyles.Transparent,
                         icon: icons[i],
                         ariaId: "",
-                        x: x[i] - (screen().width / 2),
+                        x: x[i] - (screen().width >> 1),
                         y: (13 * 5) - 18,
                         onClick: botRowBehaviours[i]
                     })
@@ -984,8 +848,8 @@ namespace microcode {
             for (let i = 0; i < this.btns.length; i++) {
                 this.btns[i].draw()
 
-                const x = (screen().width / 2) + this.btns[i].xfrm.localPos.x - (this.btns[i].icon.width / 2) + 2
-                const y = (screen().height / 2) + this.btns[i].xfrm.localPos.y + font.charHeight - 12
+                const x = (screen().width >> 1) + this.btns[i].xfrm.localPos.x - (this.btns[i].icon.width >> 1) + 2
+                const y = (screen().height >> 1) + this.btns[i].xfrm.localPos.y + font.charHeight - 12
                 screen().print(this.btnText[i], x, y, 1) // White text
             }
 
@@ -994,14 +858,14 @@ namespace microcode {
     }
 
 
-
     /**
      * Holds other components,
      * One component is active at a time
      */
     export class Window extends Scene {
-        private components: GUIComponentAbstract[];
-        private currentComponentID: number;
+        private static components: GUIComponentAbstract[];
+        private static componentQty: number;
+        private static currentComponentID: number;
 
         constructor(opts: {
             app: App,
@@ -1011,34 +875,49 @@ namespace microcode {
             components?: GUIComponentAbstract[],
             hideByDefault?: boolean
         }) {
-            super(app)
+            super(opts.app)
 
             if (opts.colour != null)
                 this.backgroundColor = opts.colour
 
-            this.components = opts.components
-            this.currentComponentID = 0
+            Window.components = opts.components
+            Window.componentQty = Window.components.length
+            Window.currentComponentID = 0
 
-            if (this.components != null && opts.hideByDefault)
-                this.focus(this.currentComponentID)
+            if (Window.components != null && opts.hideByDefault)
+                Window.focus(true)
+
+            input.onButtonPressed(1, function() {
+                Window.currentComponentID = (Window.currentComponentID + 1) % Window.componentQty
+                Window.focus(true)
+            })
+        }
+
+        public static makeComponentActive(componentID: number, hideOthers: boolean) {
+            Window.currentComponentID = componentID;
+            Window.focus(hideOthers);
+        }
+
+        public static updateComponentsContext(componentID: number, context: any[]) {
+            this.components[componentID].addContext(context)
         }
 
         /* override */ startup() {
             super.startup()
         }
 
-        focus(componentID: number, hideOthers: boolean = true) {
+        private static focus(hideOthers: boolean) {
             if (hideOthers)
-                this.components.forEach(component => component.hide())
-            this.components[componentID].unHide()
+                Window.components.forEach(component => {component.hide()})
+            Window.components.forEach(component => {component.unmakeActive()})
 
-            this.currentComponentID = componentID
+            Window.components[Window.currentComponentID].unHide()
+            Window.components[Window.currentComponentID].makeActive()
         }
 
         showAllComponents() {
-            this.components.forEach(component => component.unHide())
+            Window.components.forEach(component => component.unHide())
         }
-
 
         draw() {
             super.draw()
@@ -1051,12 +930,236 @@ namespace microcode {
                 this.backgroundColor
             )
 
-            this.components.forEach(component => {
-                if (!component.isHidden())
-                    component.draw()
+            if (Window.components != null) {
+                Window.components.forEach(component => {
+                    if (!component.hidden && !component.active)
+                        component.draw()
+                })
+            }
+
+            // Always draw active ontop
+            Window.components[Window.currentComponentID].draw()
+        }
+    }
+
+    export class ButtonCollection extends GUIComponentAbstract {
+        private btns: Button[][];
+        private numberOfRows: number;
+        private numberOfCols: number[];
+
+        private cursorBounds: Bounds;
+        private cursorOutlineColour: number;
+        private cursorRow: number;
+        private cursorCol: number;
+
+        constructor(opts: {
+            alignment: GUIComponentAlignment,
+            btns: Button[][],
+            isActive: boolean,
+            isHidden?: boolean,
+            xOffset?: number,
+            yOffset?: number,
+            xScaling?: number,
+            yScaling?: number,
+            colour?: number,
+            border?: boolean,
+            title?: string,
+            cursorColour?: number
+        }) {
+            super({
+                alignment: opts.alignment,
+                xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
+                yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
+                width: TextBox.DEFAULT_WIDTH,
+                height: TextBox.DEFAULT_HEIGHT,
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
+                xScaling: opts.xScaling,
+                yScaling: opts.yScaling,
+                colour: opts.colour,
+                border: opts.border
             })
 
-            // this.cursor.draw()
+            if (opts.btns != null) {
+                this.btns = opts.btns;
+
+                // Adjust button x & y to be relative to this components window left & top:
+                this.btns.forEach(row => {
+                    row.forEach(btn => {
+                        btn.xfrm.localPos.x = this.bounds.left + btn.xfrm.localPos.x + (btn.width >> 1) + 2
+                        btn.xfrm.localPos.y = this.bounds.top + btn.xfrm.localPos.y + (btn.height >> 1) + 2
+                    })
+                })
+
+                this.isActive = opts.isActive
+
+                this.numberOfCols = this.btns.map(row => row.length)
+                this.numberOfRows = this.btns.length
+
+                this.cursorBounds = new Bounds({
+                    width: this.btns[0][0].width + 4,
+                    height: this.btns[0][0].height + 4,
+                    left: this.btns[0][0].xfrm.localPos.x - (this.btns[0][0].width >> 1) - 2,
+                    top: this.btns[0][0].xfrm.localPos.y - (this.btns[0][0].height >> 1) - 2
+                })
+                this.cursorOutlineColour = (opts.cursorColour != null) ? opts.cursorColour : 9; // Default is light blue
+                this.cursorRow = 0;
+                this.cursorCol = 0;
+
+                if (this.isActive)
+                    this.bindShieldButtons()
+            }
+        }
+
+        bindShieldButtons() {
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.right.id,
+                () => {
+                    if (this.cursorCol == this.numberOfCols[this.cursorRow])
+                        this.cursorCol = 0
+                    else
+                        this.cursorCol = (this.cursorCol + 1) % this.numberOfCols[this.cursorRow]
+                    this.updateCursor()
+                }
+            )
+
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.up.id,
+                () => {
+                    this.cursorRow = (((this.cursorRow - 1) % this.numberOfRows) + this.numberOfRows) % this.numberOfRows; // Non-negative modulo
+
+                    // Row above might have less cols, adjust if neccessary:
+                    if (this.numberOfCols[this.cursorRow] <= this.cursorCol)
+                        this.cursorCol = this.numberOfCols[this.cursorRow] - 1
+                    this.updateCursor()
+                }
+            )
+
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.down.id,
+                () => {
+                    this.cursorRow = (this.cursorRow + 1) % this.numberOfRows;
+
+                    // Row below might have less cols, adjust if neccessary:
+                    if (this.numberOfCols[this.cursorRow] <= this.cursorCol)
+                        this.cursorCol = this.numberOfCols[this.cursorRow] - 1
+                    this.updateCursor()
+                }
+            )
+
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.left.id,
+                () => {
+                    if (this.cursorCol == 0)
+                        this.cursorCol = this.numberOfCols[this.cursorRow] - 1
+                    else
+                        this.cursorCol -= 1
+                    this.updateCursor()
+                }
+            )
+
+            // click
+            const click = () => this.click()
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.A.id,
+                click
+            )
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.A.id + keymap.PLAYER_OFFSET,
+                click
+            )
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.B.id,
+                () => this.back()
+            )
+        }
+
+        unbindShieldButtons() {
+            control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => { })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.A.id + keymap.PLAYER_OFFSET, () => { })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => { })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => { })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => { })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => { })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => { })
+        }
+
+        makeActive() {
+            this.isActive = true
+            this.bindShieldButtons()
+        }
+
+        unmakeActive() {
+            this.isActive = false
+            this.unbindShieldButtons()
+        }
+
+        click() {
+            this.btns[this.cursorRow][this.cursorCol].onClick(this.btns[this.cursorRow][this.cursorCol])
+        }
+
+        back() {
+
+        }
+
+        updateCursor() {
+            const x = this.cursorRow
+            const y = this.cursorCol
+            this.cursorBounds = new Bounds({
+                width: this.btns[x][y].width + 4,
+                height: this.btns[x][y].height + 4,
+                left: this.btns[x][y].xfrm.localPos.x - (this.btns[x][y].width >> 1) - 2,
+                top: this.btns[x][y].xfrm.localPos.y - (this.btns[x][y].height >> 1) - 2
+            })
+            this.drawCursor()
+        }
+
+        drawCursor() {
+            this.cursorBounds.fillRect(this.cursorOutlineColour)
+        }
+
+        drawCursorText() {
+            const text = this.btns[this.cursorRow][this.cursorCol].ariaId
+
+            if (text) {
+                const pos = this.cursorBounds;
+                const n = text.length
+                const font = microcode.font
+                const w = font.charWidth * n
+                const h = font.charHeight
+                const x = Math.max(
+                    Screen.LEFT_EDGE + 1,
+                    Math.min(Screen.RIGHT_EDGE - 1 - w, pos.left + (pos.width >> 1) - (w >> 1))
+                )
+                const y = Math.min(
+                    pos.top + (pos.height) + 1,
+                    Screen.BOTTOM_EDGE - 1 - font.charHeight
+                )
+                Screen.fillRect(x - 1, y - 1, w + 1, h + 2, 15)
+                Screen.print(text, x, y, 1, font)
+            }
+        }
+
+        draw() {
+            if (!this.isHidden) {
+                super.draw()
+                if (this.isActive) {
+                    this.drawCursor()
+                }
+
+                this.btns.forEach(btnRow => btnRow.forEach(btn => btn.draw()))
+
+                if (this.isActive) {
+                    this.drawCursorText()
+                }
+            }
         }
     }
 }

@@ -205,10 +205,12 @@ namespace microcode {
         public pressable: boolean
 
         public get ariaId(): string {
-            return (
-                this._ariaId ||
-                (typeof this.iconId === "string" ? <string>this.iconId : "")
-            )
+            // return (
+            //     this._ariaId ||
+            //     (typeof this.iconId === "string" ? <string>this.iconId : "")
+            // )
+
+            return this._ariaId
         }
 
         public set ariaId(value: string) {
@@ -227,10 +229,10 @@ namespace microcode {
         constructor(opts: {
             parent?: IPlaceable
             style?: ButtonStyle
-            icon: string | Bitmap
+            icon?: string | Bitmap
             ariaId?: string
-            x: number
-            y: number
+            x?: number
+            y?: number
             onClick?: (button: Button) => void,
             dynamicBoundaryColorsOn?: boolean
             boundaryColor?: number,
@@ -238,13 +240,13 @@ namespace microcode {
             state?: number[],
         }) {
             super(
-                opts.x,
-                opts.y,
+                (opts.x != null) ? opts.x : 0,
+                (opts.y != null) ? opts.y : 0,
                 opts.style || ButtonStyles.Transparent,
                 opts.parent && opts.parent.xfrm
             )
             this.iconId = opts.icon
-            this._ariaId = opts.ariaId
+            this._ariaId = (opts.ariaId != null) ? opts.ariaId : ""
             this.onClick = opts.onClick
             this.buildSprite(this.image_())
 

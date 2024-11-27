@@ -650,7 +650,7 @@ namespace microcode {
         private btnText: string[]
         private callbacks: ((btn: Button) => void)[][]
 
-        constructor(callbacks: ((btn: Button) => void)[][], priorFn?: () => void) {
+        constructor(app: App, callbacks: ((btn: Button) => void)[][], priorFn?: () => void) {
             super(app,
                 (priorFn != null) ? priorFn : function () { },
                 new GridNavigator(
