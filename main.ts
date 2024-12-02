@@ -106,7 +106,10 @@ namespace microcode {
     const txtBtnComp = new TextButtonCollection({
         alignment: GUIComponentAlignment.CENTRE,
         isActive: true,
-        textBtns: [new TextButton({ text: "Text Btn 1", callback: () => basic.showString("hi"), textColour: 1})],
+        textBtns: [
+            new TextButton({ text: "Text Btn 1", callback: () => basic.showString("hi") }),
+            new TextButton({ text: "Text Btn 2", callback: () => basic.showString("yo") })
+        ],
         xOffset: 10,
         title: "Title :)"
     })

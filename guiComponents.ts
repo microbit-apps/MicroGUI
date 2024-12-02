@@ -876,6 +876,7 @@ namespace microcode {
 
         private text: string;
         private colour: number;
+        private shadowColour: number;
         private textColour: number;
 
         constructor(opts: {
@@ -893,19 +894,20 @@ namespace microcode {
             this.bounds = new Bounds({
                 top: y, 
                 left: x, 
-                width: (font.charWidth * (this.text.length + 1)), 
+                width: (font.charWidth * (this.text.length + 1)) + 1,  // + 1 for the cursor in ButtonCollection to draw on top of.
                 height: font.charHeight + 2
             });
             this.shadowBounds = new Bounds({
                 top: this.bounds.top,
-                left: this.bounds.left,
-                width: this.bounds.width + 1,
+                left: this.bounds.left + 1,
+                width: this.bounds.width + 1, // + 1 for the cursor in ButtonCollection to draw on top of.
                 height: this.bounds.height + 1
             });
 
             this.callback = opts.callback;
 
             this.colour = (opts.colour != null) ? opts.colour : 6;
+            this.shadowColour = 15;
             this.textColour = (opts.textColour != null) ? opts.textColour : 1;
         }
 
@@ -921,8 +923,12 @@ namespace microcode {
             this.shadowBounds.height += heightShift;
         }
 
+        public setShadowColour(newColour: number) {
+            this.shadowColour = newColour;
+        }
+
         draw() {
-            this.shadowBounds.fillRect(15);
+            this.shadowBounds.fillRect(this.shadowColour);
             this.bounds.fillRect(this.colour);
 
             screen().print(
@@ -974,18 +980,23 @@ namespace microcode {
             this.selectedTextBtnIndex = 0;
 
             const titleYOffset = (this.title != "") ? 13 : 0;
+            const btnXOffset = (this.textBtns.length > 0) ? (this.bounds.width / (this.textBtns.length + 1)) : 0;
+
+            let cumulativeXOffset = 0;
             this.textBtns.forEach(btn => {
-                btn.shiftBounds(this.bounds.left, this.bounds.top + titleYOffset, 0, 0)
+                btn.shiftBounds(this.bounds.left, this.bounds.top + titleYOffset + cumulativeXOffset, 0, 0);
+                cumulativeXOffset += btnXOffset
             })
 
             // Cursor:
             if (this.textBtns.length > 0) {
                 this.cursorBounds = new Bounds({
-                    top: this.textBtns[0].bounds.top - 1,
-                    left: this.textBtns[0].bounds.left - 1,
-                    width: this.textBtns[0].bounds.width + 2,
-                    height: this.textBtns[0].bounds.height + 2,
-                })
+                    top: this.textBtns[this.selectedTextBtnIndex].bounds.top - 1,
+                    left: this.textBtns[this.selectedTextBtnIndex].bounds.left,
+                    width: this.textBtns[this.selectedTextBtnIndex].bounds.width + 2,
+                    height: this.textBtns[this.selectedTextBtnIndex].bounds.height + 2,
+                });
+                this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
             }
 
             this.setupButtonBindings();
@@ -1003,11 +1014,31 @@ namespace microcode {
             control.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => { })
             
             control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
+                this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
+
                 this.selectedTextBtnIndex = Math.max(this.selectedTextBtnIndex - 1, 0);
+                this.cursorBounds = new Bounds({
+                    top: this.textBtns[this.selectedTextBtnIndex].bounds.top - 1,
+                    left: this.textBtns[this.selectedTextBtnIndex].bounds.left,
+                    width: this.textBtns[this.selectedTextBtnIndex].bounds.width + 2,
+                    height: this.textBtns[this.selectedTextBtnIndex].bounds.height + 2,
+                })
+                this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
             })
+
             control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => { 
+                this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
+
                 this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.textBtns.length;
+                this.cursorBounds = new Bounds({
+                    top: this.textBtns[this.selectedTextBtnIndex].bounds.top - 1,
+                    left: this.textBtns[this.selectedTextBtnIndex].bounds.left,
+                    width: this.textBtns[this.selectedTextBtnIndex].bounds.width + 2,
+                    height: this.textBtns[this.selectedTextBtnIndex].bounds.height + 2,
+                })
+                this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
             })
+
             control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => { })
             control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => { })
         }
