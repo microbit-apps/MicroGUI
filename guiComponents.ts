@@ -1,4 +1,14 @@
 namespace microcode {
+    function unbindShieldButtons() {
+        control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => { })
+        control.onEvent(ControllerButtonEvent.Pressed, controller.A.id + keymap.PLAYER_OFFSET, () => { })
+        control.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => { })
+        control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => { })
+        control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => { })
+        control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => { })
+        control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => { })
+    }
+
     /**
      * Passed to the constructor of a GUIComponent to quickly align it.
      * Alignment may be further adjusted by an xOffset & yOffset.
@@ -860,34 +870,64 @@ namespace microcode {
 
     export class TextButton {
         public bounds: Bounds;
+        private shadowBounds: Bounds;
+
+        public callback: () => void;
+
         private text: string;
-        private callback: (x: any) => void;
         private colour: number;
         private textColour: number;
 
         constructor(opts: {
-                text: string, 
-                callback: (x: any) => void, 
-                x?: number,
-                y?: number
-                colour?: number,
-                textColour?: number
+            text: string, 
+            callback: () => void, 
+            x?: number,
+            y?: number
+            colour?: number,
+            textColour?: number
         }) {
             this.text = opts.text;
 
             const x = (opts.x != null) ? opts.x : 0;
             const y = (opts.y != null) ? opts.y : 0;
-            this.bounds = new Bounds({top: y, left: x, width: (font.charWidth * this.text.length), height: font.charHeight + 2});
+            this.bounds = new Bounds({
+                top: y, 
+                left: x, 
+                width: (font.charWidth * (this.text.length + 1)), 
+                height: font.charHeight + 2
+            });
+            this.shadowBounds = new Bounds({
+                top: this.bounds.top,
+                left: this.bounds.left,
+                width: this.bounds.width + 1,
+                height: this.bounds.height + 1
+            });
+
             this.callback = opts.callback;
+
             this.colour = (opts.colour != null) ? opts.colour : 6;
             this.textColour = (opts.textColour != null) ? opts.textColour : 1;
         }
 
+        public shiftBounds(leftShift: number, topShift: number, widthShift: number, heightShift: number) {
+            this.bounds.left += leftShift;
+            this.bounds.top += topShift;
+            this.bounds.width += widthShift;
+            this.bounds.height += heightShift;
+
+            this.shadowBounds.left += leftShift;
+            this.shadowBounds.top += topShift;
+            this.shadowBounds.width += widthShift;
+            this.shadowBounds.height += heightShift;
+        }
+
         draw() {
+            this.shadowBounds.fillRect(15);
             this.bounds.fillRect(this.colour);
+
             screen().print(
                 this.text,
-                this.bounds.left + (screen().width >> 1) + 1,
+                this.bounds.left + (screen().width >> 1) + 3,
                 this.bounds.top + (screen().height >> 1) + 1,
                 this.textColour
             )
@@ -896,7 +936,10 @@ namespace microcode {
     
     
     export class TextButtonCollection extends GUIComponentAbstract {
+        private title: string;
         private textBtns: TextButton[];
+        private selectedTextBtnIndex: number;
+        private cursorBounds: Bounds;
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
@@ -926,18 +969,65 @@ namespace microcode {
                 border: opts.border
             });
 
+            this.title = (opts.title != null) ? opts.title : "";
             this.textBtns = (opts.textBtns != null) ? opts.textBtns : [];
+            this.selectedTextBtnIndex = 0;
 
+            const titleYOffset = (this.title != "") ? 13 : 0;
             this.textBtns.forEach(btn => {
-                btn.bounds.left += this.bounds.left;
-                btn.bounds.top += this.bounds.top;
+                btn.shiftBounds(this.bounds.left, this.bounds.top + titleYOffset, 0, 0)
             })
+
+            // Cursor:
+            if (this.textBtns.length > 0) {
+                this.cursorBounds = new Bounds({
+                    top: this.textBtns[0].bounds.top - 1,
+                    left: this.textBtns[0].bounds.left - 1,
+                    width: this.textBtns[0].bounds.width + 2,
+                    height: this.textBtns[0].bounds.height + 2,
+                })
+            }
+
+            this.setupButtonBindings();
+        }
+
+        setupButtonBindings() {
+            unbindShieldButtons();
+
+            control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => {
+                if (this.textBtns.length > 0) {
+                    this.textBtns[this.selectedTextBtnIndex].callback();
+                }
+            })
+
+            control.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => { })
+            
+            control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
+                this.selectedTextBtnIndex = Math.max(this.selectedTextBtnIndex - 1, 0);
+            })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => { 
+                this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.textBtns.length;
+            })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => { })
+            control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => { })
         }
 
         draw() {
             super.draw();
 
-            this.textBtns.forEach(btn => btn.draw())            
+            const titleOffset = (font.charWidth * this.title.length) >> 1;
+
+            screen().print(
+                this.title,
+                (screen().width >> 1) + this.bounds.left + (this.width >> 1) - titleOffset,
+                (screen().height >> 1) + this.bounds.top + 2,
+            )
+
+            this.textBtns.forEach(btn => btn.draw());
+
+            if (this.textBtns.length > 0) {
+                this.cursorBounds.drawRect(9);
+            }
         }
     }
 
@@ -1165,15 +1255,6 @@ namespace microcode {
             )
         }
 
-        unbindShieldButtons() {
-            control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => { })
-            control.onEvent(ControllerButtonEvent.Pressed, controller.A.id + keymap.PLAYER_OFFSET, () => { })
-            control.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => { })
-            control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => { })
-            control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => { })
-            control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => { })
-            control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => { })
-        }
 
         makeActive() {
             this.isActive = true
@@ -1182,7 +1263,7 @@ namespace microcode {
 
         unmakeActive() {
             this.isActive = false
-            this.unbindShieldButtons()
+            unbindShieldButtons()
         }
 
         click() {

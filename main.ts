@@ -106,8 +106,9 @@ namespace microcode {
     const txtBtnComp = new TextButtonCollection({
         alignment: GUIComponentAlignment.CENTRE,
         isActive: true,
-        textBtns: [new TextButton({text: "hi", callback: () => "hi", })],
-        xOffset: 10
+        textBtns: [new TextButton({ text: "Text Btn 1", callback: () => basic.showString("hi"), textColour: 1})],
+        xOffset: 10,
+        title: "Title :)"
     })
     const window = new Window({ app, components: [txtBtnComp] })
     app.pushScene(window)
