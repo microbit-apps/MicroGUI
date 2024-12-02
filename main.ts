@@ -77,27 +77,38 @@ namespace microcode {
     // const window = new Window({app, components: [comp1, comp2, comp3] })
     // app.pushScene(window)
 
-    let count = 0;
-    const comp1 = new ButtonCollection({
-        alignment: GUIComponentAlignment.TOP,
-        btns: [
-            [new Button({ icon: "pin_0", ariaId: "+1", x: 10, y: 10, onClick: () => {
-                count += 1;
-            }})],
-        ],
+    // let count = 0;
+    // const comp1 = new ButtonCollection({
+    //     alignment: GUIComponentAlignment.TOP,
+    //     btns: [
+    //         [new Button({
+    //             icon: "pin_0", ariaId: "+1", x: 10, y: 10, onClick: () => {
+    //                 count += 1;
+    //             }
+    //         })],
+    //     ],
+    //     isActive: true,
+    //     colour: 2,
+    //     xScaling: 0.5,
+    //     yScaling: 0.7,
+    //     xOffset: -10
+    // })
+
+    // const comp2 = new GUIGraph({
+    //     alignment: GUIComponentAlignment.BOT,
+    //     graphableFns: [new GraphableFunction((_) => count)],
+    //     isActive: false,
+    // })
+
+    // const window = new Window({ app, components: [comp1, comp2] })
+    // app.pushScene(window)
+
+    const txtBtnComp = new TextButtonCollection({
+        alignment: GUIComponentAlignment.CENTRE,
         isActive: true,
-        colour: 2,
-        xScaling: 0.5,
-        yScaling: 0.7,
-        xOffset: -10
+        textBtns: [new TextButton({text: "hi", callback: () => "hi", })],
+        xOffset: 10
     })
-
-    const comp2 = new GUIGraph({
-        alignment: GUIComponentAlignment.BOT,
-        graphableFns: [new GraphableFunction((_) => count)],
-        isActive: false,
-    })
-
-    const window = new Window({ app, components: [comp1, comp2] })
+    const window = new Window({ app, components: [txtBtnComp] })
     app.pushScene(window)
 }

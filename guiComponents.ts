@@ -858,6 +858,90 @@ namespace microcode {
     }
 
 
+    export class TextButton {
+        public bounds: Bounds;
+        private text: string;
+        private callback: (x: any) => void;
+        private colour: number;
+        private textColour: number;
+
+        constructor(opts: {
+                text: string, 
+                callback: (x: any) => void, 
+                x?: number,
+                y?: number
+                colour?: number,
+                textColour?: number
+        }) {
+            this.text = opts.text;
+
+            const x = (opts.x != null) ? opts.x : 0;
+            const y = (opts.y != null) ? opts.y : 0;
+            this.bounds = new Bounds({top: y, left: x, width: (font.charWidth * this.text.length), height: font.charHeight + 2});
+            this.callback = opts.callback;
+            this.colour = (opts.colour != null) ? opts.colour : 6;
+            this.textColour = (opts.textColour != null) ? opts.textColour : 1;
+        }
+
+        draw() {
+            this.bounds.fillRect(this.colour);
+            screen().print(
+                this.text,
+                this.bounds.left + (screen().width >> 1) + 1,
+                this.bounds.top + (screen().height >> 1) + 1,
+                this.textColour
+            )
+        }
+    }
+    
+    
+    export class TextButtonCollection extends GUIComponentAbstract {
+        private textBtns: TextButton[];
+
+        constructor(opts: {
+            alignment: GUIComponentAlignment,
+            isActive: boolean,
+            textBtns: TextButton[],
+            isHidden?: boolean,
+            xOffset?: number,
+            yOffset?: number,
+            xScaling?: number,
+            yScaling?: number,
+            colour?: number,
+            border?: boolean,
+            title?: string,
+            text?: string | string[]
+        }) {
+            super({
+                alignment: opts.alignment,
+                xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
+                yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
+                width: GUIComponentAbstract.DEFAULT_WIDTH,
+                height: GUIComponentAbstract.DEFAULT_HEIGHT,
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
+                xScaling: opts.xScaling,
+                yScaling: opts.yScaling,
+                colour: opts.colour,
+                border: opts.border
+            });
+
+            this.textBtns = (opts.textBtns != null) ? opts.textBtns : [];
+
+            this.textBtns.forEach(btn => {
+                btn.bounds.left += this.bounds.left;
+                btn.bounds.top += this.bounds.top;
+            })
+        }
+
+        draw() {
+            super.draw();
+
+            this.textBtns.forEach(btn => btn.draw())            
+        }
+    }
+
+
     /**
      * Holds other components,
      * One component is active at a time
