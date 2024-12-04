@@ -21,12 +21,6 @@ namespace microcode {
 
 
 
-
-
-
-
-
-
     // const comp1 = new ButtonCollection({
     //     alignment: GUIComponentAlignment.TOP,
     //     btns: [
@@ -77,6 +71,9 @@ namespace microcode {
     // const window = new Window({app, components: [comp1, comp2, comp3] })
     // app.pushScene(window)
 
+
+
+
     // let count = 0;
     // const comp1 = new ButtonCollection({
     //     alignment: GUIComponentAlignment.TOP,
@@ -102,6 +99,8 @@ namespace microcode {
 
     // const window = new Window({ app, components: [comp1, comp2] })
     // app.pushScene(window)
+
+    
 
     const txtBtnComp = new TextButtonCollection({
         alignment: GUIComponentAlignment.CENTRE,
