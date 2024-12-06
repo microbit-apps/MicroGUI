@@ -1,4 +1,8 @@
 namespace microcode {
+
+    /**
+     * Util function used within this file, useful for ensuring that prior bindings are not kept when using a new component.
+     */
     function unbindShieldButtons() {
         control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => { })
         control.onEvent(ControllerButtonEvent.Pressed, controller.A.id + keymap.PLAYER_OFFSET, () => { })
@@ -33,31 +37,48 @@ namespace microcode {
      * A GUI Component has a .context for storage of hidden component state.
      */
     abstract class GUIComponentAbstract extends Scene {
-        public static DEFAULT_WIDTH: number = screen().width >> 1;
-        public static DEFAULT_HEIGHT: number = screen().height >> 1;
-        
+        /** Which of the 9 options should this component snap to? */
+        private alignment: GUIComponentAlignment
+
+        /** What is the width of this component, without any xScaling? */
+        private unscaledWidth: number;
+
+        /** What is the height of this component, without any yScaling? */
+        private unscaledHeight: number;
+
+        /** 
+         * Can the user interact with this component? Will the Window ignore its A, B, etc presses? 
+         * Modified by Window.makeComponentActive()
+        */
         protected isActive: boolean;
+
+        /** Should this component be drawn on the screen? Modified by optional arg of Window.makeComponentActive() */
         protected isHidden: boolean;
 
+        /** A component can store arbitrary information, this information may be passed to it via Window.updateComponentsContext() */
         protected context: any[];
 
+        /** The rectangle that this component embodies. The width & height are equal to DEFAULT_WIDTH * this.xScaling. */
         protected bounds: Bounds;
         protected backgroundColour: number = 3;
 
-        private alignment: GUIComponentAlignment
+        /** Modifies the DEFAULT_WIDTH of this screen to change its size. */
         private xScaling: number = 1.0;
+
+        /** Modifies the DEFAULT_HEIGHT of this screen to change its size. */
         private yScaling: number = 1.0;
 
+        /** For minor tweaks to positioning of this.alignment. Modifies this.bounds.left */
         private xOffset: number;
+
+        /** For minor tweaks to positioning of this.alignment. Modifies this.bounds.top */
         private yOffset: number;
-        private unscaledComponentWidth: number;
-        private unscaledComponentHeight: number;
+
+        /** Does this component have coloured (shadowed) borders? */
         private hasBorder: boolean
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
-            width: number,
-            height: number,
             isActive: boolean,
             isHidden?: boolean,
             xOffset?: number,
@@ -84,8 +105,8 @@ namespace microcode {
             this.xOffset = (opts.xOffset != null) ? opts.xOffset : 0
             this.yOffset = (opts.yOffset != null) ? opts.yOffset : 0
             
-            this.unscaledComponentWidth = opts.width
-            this.unscaledComponentHeight = opts.height
+            this.unscaledWidth = screen().width >> 1
+            this.unscaledHeight = screen().height >> 1
             this.hasBorder = (opts.border != null) ? opts.border : false
 
             const pos = this.getLeftAndTop()
@@ -93,70 +114,49 @@ namespace microcode {
             const top = pos[1];
 
             this.bounds = new microcode.Bounds({
-                width: this.unscaledComponentWidth * this.xScaling,
-                height: this.unscaledComponentHeight * this.yScaling,
+                width: this.unscaledWidth * this.xScaling,
+                height: this.unscaledHeight * this.yScaling,
                 left,
                 top
             })
         }
 
-        public get width() { return this.unscaledComponentWidth * this.xScaling }
-        public get height() { return this.unscaledComponentHeight * this.yScaling }
-        public get active() { return this.isActive }
-        public get hidden() { return this.isHidden }
-
-        makeActive(): void { this.isActive = true }
-        unmakeActive(): void { this.isActive = false }
-
-        hide(): void { this.isHidden = true }
-        unHide(): void { this.isHidden = false }
-
-        getAlignment(): number { return this.alignment }
-
-        /**
-         * This should be overriden.
-         * Other components should use this to get this components state.
-         * @returns pertinent component state information, in appropriate format; at child components discretion.
-         */
-        getContext(): any[] {return this.context}
-
-        addContext(newContext: any[]) {this.context.push(newContext)}
-
-        clearContext(): void { this.context = [] }
-        setBounds(bounds: Bounds): void { this.bounds = bounds }
-
-        getLeftAndTop(): number[] {
+        //------------------
+        // Helper functions:
+        //------------------
+        
+        private getLeftAndTop(): number[] {
             let left = 0
             let top = 0
 
             switch (this.alignment) {
                 case (GUIComponentAlignment.TOP): {
-                    left = -((this.unscaledComponentWidth * this.xScaling) >> 1) + this.xOffset;
+                    left = -((this.unscaledWidth * this.xScaling) >> 1) + this.xOffset;
                     top = -(screen().height >> 1) + this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.LEFT): {
                     left = -(screen().width >> 1) + this.xOffset;
-                    top = -((this.unscaledComponentHeight * this.yScaling) >> 1) + this.yOffset
+                    top = -((this.unscaledHeight * this.yScaling) >> 1) + this.yOffset
                     break;
                 }
                 case (GUIComponentAlignment.RIGHT): {
-                    left = (screen().width >> 1) - (this.unscaledComponentWidth * this.xScaling) + this.xOffset;
-                    top = -((this.unscaledComponentHeight * this.yScaling) >> 1) + this.yOffset
+                    left = (screen().width >> 1) - (this.unscaledWidth * this.xScaling) + this.xOffset;
+                    top = -((this.unscaledHeight * this.yScaling) >> 1) + this.yOffset
                     break;
                 }
                 case (GUIComponentAlignment.BOT): {
-                    left = -((this.unscaledComponentWidth * this.xScaling) >> 1) + this.xOffset;
-                    top = (screen().height >> 1) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
+                    left = -((this.unscaledWidth * this.xScaling) >> 1) + this.xOffset;
+                    top = (screen().height >> 1) - (this.unscaledHeight * this.yScaling) - this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.CENTRE): {
-                    left = -((this.unscaledComponentWidth * this.xScaling) >> 1) + this.xOffset
-                    top = -((this.unscaledComponentHeight * this.yScaling) >> 1) + this.yOffset
+                    left = -((this.unscaledWidth * this.xScaling) >> 1) + this.xOffset
+                    top = -((this.unscaledHeight * this.yScaling) >> 1) + this.yOffset
                     break;
                 }
                 case (GUIComponentAlignment.TOP_RIGHT): {
-                    left = ((screen().width >> 1) - (this.unscaledComponentWidth * this.xScaling)) + this.xOffset;
+                    left = ((screen().width >> 1) - (this.unscaledWidth * this.xScaling)) + this.xOffset;
                     top = -(screen().height >> 1) + this.yOffset;
                     break;
                 }
@@ -166,13 +166,13 @@ namespace microcode {
                     break;
                 }
                 case (GUIComponentAlignment.BOT_RIGHT): {
-                    left = ((screen().width >> 1) - (this.unscaledComponentWidth * this.xScaling)) + this.xOffset;
-                    top = (screen().height >> 1) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
+                    left = ((screen().width >> 1) - (this.unscaledWidth * this.xScaling)) + this.xOffset;
+                    top = (screen().height >> 1) - (this.unscaledHeight * this.yScaling) - this.yOffset;
                     break;
                 }
                 case (GUIComponentAlignment.BOT_LEFT): {
                     left = (-(screen().width >> 1)) + this.xOffset;
-                    top = (screen().height >> 1) - (this.unscaledComponentHeight * this.yScaling) - this.yOffset;
+                    top = (screen().height >> 1) - (this.unscaledHeight * this.yScaling) - this.yOffset;
                     break;
                 }
             }
@@ -180,20 +180,35 @@ namespace microcode {
             return [left, top]
         }
 
-        rescale(xScaling: number, yScaling: number): void {
+
+        //-------------------------
+        // Public facing functions:
+        //-------------------------
+
+
+        /**
+         * Adjusts .xScaling & .yScaling, then this.bounds() as appropriate.
+         * @param xScaling 1.0 is default; affects this.bounds.width: width = (this.xScaling * this.unscaledWidth) 
+         * @param yScaling 1.0 is default; affects this.bounds.height: height = (this.yScaling * this.unscaledHeight) 
+         */
+        public rescale(xScaling: number, yScaling: number): void {
             if (this.bounds != null) {
                 this.xScaling = xScaling
                 this.yScaling = yScaling
                 this.bounds = new microcode.Bounds({
-                    width: this.unscaledComponentWidth * this.xScaling,
-                    height: this.unscaledComponentHeight * this.yScaling,
+                    width: this.unscaledWidth * this.xScaling,
+                    height: this.unscaledHeight * this.yScaling,
                     left: this.bounds.left,
                     top: this.bounds.top
                 })
             }
         }
+        
 
-        draw(): void {
+        /**
+         * Invoked by parent, see Window.
+         */
+        public draw(): void {
             screen().fillRect(
                 this.bounds.left + (screen().width >> 1) + 2,
                 this.bounds.top + (screen().height >> 1) + 2,
@@ -204,8 +219,38 @@ namespace microcode {
 
             this.bounds.fillRect(this.backgroundColour)
         }
+
+
+        public get width() { return this.unscaledWidth * this.xScaling }
+        public get height() { return this.unscaledHeight * this.yScaling }
+        public get active() { return this.isActive }
+        public get hidden() { return this.isHidden }
+
+        public getAlignment(): number { return this.alignment }
+        public makeActive(): void { this.isActive = true }
+        public unmakeActive(): void { this.isActive = false }
+
+        public hide(): void { this.isHidden = true }
+        public unHide(): void { this.isHidden = false }
+
+        /**
+         * This should be overriden.
+         * Other components should use this to get this components state.
+         * @returns pertinent component state information, in appropriate format; at child components discretion.
+         */
+        public getContext(): any[] {return this.context}
+
+        public addContext(newContext: any[]) {this.context.push(newContext)}
+        
+        public clearContext(): void { this.context = [] }
+
+        public setBounds(bounds: Bounds): void { this.bounds = bounds }
     }
 
+
+    /**
+     * Component that contains a Title + a chunk of text.
+     */
     export class TextBox extends GUIComponentAbstract {
         private title: string;
         private maxCharactersPerLine: number;
@@ -230,8 +275,6 @@ namespace microcode {
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
                 isActive: opts.isActive,
                 isHidden: opts.isHidden,
-                width: TextBox.DEFAULT_WIDTH,
-                height: TextBox.DEFAULT_HEIGHT,
                 xScaling: opts.xScaling,
                 yScaling: opts.yScaling,
                 colour: opts.colour,
@@ -546,8 +589,6 @@ namespace microcode {
                 isHidden: opts.isHidden,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
-                width: TextBox.DEFAULT_WIDTH,
-                height: TextBox.DEFAULT_HEIGHT,
                 xScaling: opts.xScaling,
                 yScaling: opts.yScaling,
                 colour: opts.colour
@@ -965,8 +1006,6 @@ namespace microcode {
                 alignment: opts.alignment,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
-                width: GUIComponentAbstract.DEFAULT_WIDTH,
-                height: GUIComponentAbstract.DEFAULT_HEIGHT,
                 isActive: opts.isActive,
                 isHidden: opts.isHidden,
                 xScaling: opts.xScaling,
@@ -1175,8 +1214,6 @@ namespace microcode {
                 alignment: opts.alignment,
                 xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
-                width: TextBox.DEFAULT_WIDTH,
-                height: TextBox.DEFAULT_HEIGHT,
                 isActive: opts.isActive,
                 isHidden: opts.isHidden,
                 xScaling: opts.xScaling,
