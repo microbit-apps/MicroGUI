@@ -6,7 +6,7 @@
         "radio": "*",
         "microphone": "*",
         "datalogger": "*",
-        "pxt-arcadeshield": "github:microsoft/pxt-arcadeshield#v0.1.6"
+        "pxt-arcadeshield": "github:microbit-apps/pxt-arcadeshield#v0.1.13"
     },
     "files": [
         "main.blocks",
