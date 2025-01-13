@@ -77,6 +77,8 @@ namespace microcode {
         /** Does this component have coloured (shadowed) borders? */
         private hasBorder: boolean
 
+        private showBackground: boolean
+
         constructor(opts: {
             alignment: GUIComponentAlignment,
             isActive: boolean,
@@ -86,7 +88,8 @@ namespace microcode {
             xScaling?: number,
             yScaling?: number,
             colour?: number,
-            border?: boolean
+            border?: boolean,
+            showBackground?: boolean
         }) {
             super()
 
@@ -104,10 +107,12 @@ namespace microcode {
 
             this.xOffset = (opts.xOffset != null) ? opts.xOffset : 0
             this.yOffset = (opts.yOffset != null) ? opts.yOffset : 0
-            
+
             this.unscaledWidth = screen().width >> 1
             this.unscaledHeight = screen().height >> 1
             this.hasBorder = (opts.border != null) ? opts.border : false
+
+            this.showBackground = (opts.showBackground != null) ? opts.showBackground : true;
 
             const pos = this.getLeftAndTop()
             const left = pos[0];
@@ -124,7 +129,7 @@ namespace microcode {
         //------------------
         // Helper functions:
         //------------------
-        
+
         private getLeftAndTop(): number[] {
             let left = 0
             let top = 0
@@ -203,21 +208,23 @@ namespace microcode {
                 })
             }
         }
-        
+
 
         /**
          * Invoked by parent, see Window.
          */
         public draw(): void {
-            screen().fillRect(
-                this.bounds.left + (screen().width >> 1) + 2,
-                this.bounds.top + (screen().height >> 1) + 2,
-                this.bounds.width,
-                this.bounds.height,
-                15
-            )
+            if (this.showBackground) {
+                screen().fillRect(
+                    this.bounds.left + (screen().width >> 1) + 2,
+                    this.bounds.top + (screen().height >> 1) + 2,
+                    this.bounds.width,
+                    this.bounds.height,
+                    15
+                )
 
-            this.bounds.fillRect(this.backgroundColour)
+                this.bounds.fillRect(this.backgroundColour)
+            }
         }
 
 
@@ -238,10 +245,10 @@ namespace microcode {
          * Other components should use this to get this components state.
          * @returns pertinent component state information, in appropriate format; at child components discretion.
          */
-        public getContext(): any[] {return this.context}
+        public getContext(): any[] { return this.context }
 
-        public addContext(newContext: any[]) {this.context.push(newContext)}
-        
+        public addContext(newContext: any[]) { this.context.push(newContext) }
+
         public clearContext(): void { this.context = [] }
 
         public setBounds(bounds: Bounds): void { this.bounds = bounds }
@@ -267,7 +274,8 @@ namespace microcode {
             colour?: number,
             border?: boolean,
             title?: string,
-            text?: string | string[]
+            text?: string | string[],
+            showBackground?: boolean
         }) {
             super({
                 alignment: opts.alignment,
@@ -278,7 +286,8 @@ namespace microcode {
                 xScaling: opts.xScaling,
                 yScaling: opts.yScaling,
                 colour: opts.colour,
-                border: opts.border
+                border: opts.border,
+                showBackground: opts.showBackground
             })
 
             this.title = (opts.title != null) ? opts.title : ""
@@ -288,7 +297,7 @@ namespace microcode {
                 this.textChunks = [""]
             }
 
-            else if (typeof(opts.text) === 'string') {
+            else if (typeof (opts.text) === 'string') {
                 this.textChunks = [];
 
                 for (let i = 0; i < opts.text.length; i += this.maxCharactersPerLine) {
@@ -331,6 +340,7 @@ namespace microcode {
     export class GUISlider extends TextBox {
         private maximum: number;
         private minimum: number;
+        private sliderColour: number;
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
@@ -341,6 +351,8 @@ namespace microcode {
             xScaling?: number,
             yScaling?: number,
             colour?: number,
+            backgroundColour?: number,
+            showBackground?: boolean,
             border?: boolean,
             title?: string,
             sliderMax?: number,
@@ -354,14 +366,16 @@ namespace microcode {
                 yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
                 xScaling: opts.xScaling,
                 yScaling: opts.yScaling,
-                colour: opts.colour,
-                border: opts.border
+                colour: opts.backgroundColour,
+                border: opts.border,
+                showBackground: opts.showBackground
             })
 
             this.maximum = (opts.sliderMax != null) ? opts.sliderMax : 100
             this.minimum = (opts.sliderMin != null) ? opts.sliderMin : 0
+            this.sliderColour = (opts.colour != null) ? opts.colour : 13
 
-            this.context = [this.maximum - this.minimum]
+            this.context = [(Math.abs(this.maximum) + Math.abs(this.minimum)) / 2]
 
             control.onEvent(
                 ControllerButtonEvent.Pressed,
@@ -379,31 +393,46 @@ namespace microcode {
         draw() {
             super.draw()
 
-            // screen().fillRect(
-            //     // this.bounds.left + (this.bounds.width >> 1) - (this.bounds.width / 10),
-            //     this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - 10,
-            //     this.bounds.top + this.bounds.height + (this.bounds.height * (this.getContext()[0] / this.maximum)),// + (screen().height >> 1),
-            //     20,
-            //     10,
-            //     15
-            // )
+            const rodWidth = 10;
 
+            // Black border for shadow effect:
             screen().fillRect(
-                // this.bounds.left + (this.bounds.width >> 1) - (this.bounds.width / 10),
-                this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - 10,
-                // this.bounds.top - 10 + (this.bounds.height / (this.getContext()[0] / this.maximum)) + (screen().height >> 1),
-                this.bounds.top + (this.bounds.height * (this.maximum / this.getContext()[0])) + 15,
-                20,
-                10,
-                15
+                this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - (rodWidth >> 1),
+                this.bounds.top + (screen().height >> 1),
+                rodWidth + 1,
+                this.bounds.height + 1,
+                0
             )
 
             screen().fillRect(
-                this.bounds.left + (this.bounds.width >> 1) - 3 + (screen().width >> 1),
+                this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - (rodWidth >> 1),
                 this.bounds.top + (screen().height >> 1),
-                6,
-                this.bounds.height - 4,
-                15
+                rodWidth,
+                this.bounds.height,
+                this.sliderColour
+            )
+
+            const sliderWidth = 20;
+            const sliderHeight = 10;
+            const y = this.context[0] / (Math.abs(this.minimum) + Math.abs(this.maximum));
+            const slideableRegion = this.bounds.height - (sliderHeight)
+
+
+            // Black border for shadow effect:
+            screen().fillRect(
+                this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - (sliderWidth >> 1),
+                this.bounds.top + (screen().height >> 1) + (slideableRegion - (y * (slideableRegion))),
+                sliderWidth + 1,
+                sliderHeight + 1,
+                0
+            )
+
+            screen().fillRect(
+                this.bounds.left + (this.bounds.width >> 1) + (screen().width >> 1) - (sliderWidth >> 1),
+                this.bounds.top + (screen().height >> 1) + (slideableRegion - (y * (slideableRegion))),
+                sliderWidth,
+                sliderHeight,
+                this.sliderColour
             )
         }
     }
@@ -422,7 +451,8 @@ namespace microcode {
             yScaling?: number,
             colour?: number,
             border?: boolean,
-            title?: string
+            title?: string,
+            showBackground?: boolean
         }) {
             super({
                 alignment: opts.alignment,
@@ -433,7 +463,8 @@ namespace microcode {
                 xScaling: opts.xScaling,
                 yScaling: opts.yScaling,
                 colour: opts.colour,
-                border: opts.border
+                border: opts.border,
+                showBackground: opts.showBackground
             })
 
             this.graphableFns = opts.graphableFns
@@ -480,13 +511,13 @@ namespace microcode {
 
                     // Make sure the ticker won't be cut-off by other UI elements
                     // if (y > sensor.getMinimum() + 5) {
-                        screen().print(
-                            readingAsString,
-                            this.bounds.left + this.bounds.width + (screen().width >> 1) - (readingAsString.length * font.charWidth),
-                            y + top + this.bounds.height - 4,
-                            color,
-                            bitmaps.font5,
-                        )
+                    screen().print(
+                        readingAsString,
+                        this.bounds.left + this.bounds.width + (screen().width >> 1) - (readingAsString.length * font.charWidth),
+                        y + top + this.bounds.height - 4,
+                        color,
+                        bitmaps.font5,
+                    )
                     // }
                 }
             }
@@ -513,7 +544,7 @@ namespace microcode {
                 screen().drawLine(
                     left + (screen().width >> 1) + i,
                     (screen().height >> 1) + top,
-                    left + (screen().width >> 1) + i, 
+                    left + (screen().width >> 1) + i,
                     (screen().height >> 1) + this.bounds.height + top,
                     5
                 );
@@ -652,7 +683,7 @@ namespace microcode {
                     e.kind === FORWARD_BUTTON_ERROR_KIND
                 )
                     return
-                else throw e 
+                else throw e
             }
         }
 
@@ -723,190 +754,152 @@ namespace microcode {
     const KEYBOARD_FRAME_COUNTER_CURSOR_OFF = 40;
     const KEYBOARD_MAX_TEXT_LENGTH = 20;
 
-    export class KeyboardComponent extends GUISceneAbstract {
-        public static DEFAULT_WIDTH: number = screen().width
-        public static DEFAULT_HEIGHT: number = 80
-        private static WIDTHS: number[] = [10, 10, 10, 10, 4]
-        private btns: Button[]
-        private btnText: string[]
+    // export class KeyboardComponent extends GUIComponentAbstract {
+    //     private static WIDTHS: number[] = [10, 10, 10, 10, 4]
+    //     // private btns: Button[]
+    //     private btnBounds: Bounds[]
+    //     private btnText: string[]
 
-        private text: string;
-        private upperCase: boolean;
-        private next: (arg0: string) => void;
-        private frameCounter: number;
-        private shakeText: boolean
-        private shakeTextCounter: number
+    //     private text: string;
+    //     private upperCase: boolean;
+    //     private next: (arg0: string) => void;
+    //     private frameCounter: number;
+    //     private shakeText: boolean
+    //     private shakeTextCounter: number
 
-        constructor(opts: {
-            next: (arg0: string) => void,
-            alignment: GUIComponentAlignment,
-            isActive: boolean,
-            isHidden: boolean,
-            xOffset?: number,
-            yOffset?: number,
-            xScaling?: number,
-            yScaling?: number,
-            colour?: number,
-        }) {
-        // constructor(app: App, next: (arg0: string) => void) {
-            // super(app, new GridNavigator(5, 5, KeyboardComponent.WIDTHS))
+    //     constructor(opts: {
+    //         alignment: GUIComponentAlignment,
+    //         isActive: boolean,
+    //         next: (arg0: string) => void,
+    //         isHidden?: boolean,
+    //         xOffset?: number,
+    //         yOffset?: number,
+    //         xScaling?: number,
+    //         yScaling?: number,
+    //         colour?: number,
+    //     }) {
+    //         super({
+    //             alignment: opts.alignment,
+    //             isActive: opts.isActive,
+    //             isHidden: (opts.isHidden != null) ? opts.isHidden : false,
+    //             xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
+    //             yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
+    //             xScaling: opts.xScaling,
+    //             yScaling: opts.yScaling,
+    //             colour: opts.colour
+    //         })
 
-            super({
-                alignment: opts.alignment,
-                navigator: new GridNavigator(5, 5, KeyboardComponent.WIDTHS),
-                isActive: opts.isActive,
-                isHidden: opts.isHidden,
-                xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
-                yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
-                width: KeyboardComponent.DEFAULT_WIDTH,
-                height: KeyboardComponent.DEFAULT_HEIGHT,
-                xScaling: opts.xScaling,
-                yScaling: opts.yScaling,
-                colour: opts.colour
-            })
+    //         this.text = ""
+    //         this.upperCase = true
 
-            this.text = ""
-            this.upperCase = true
+    //         // this.btns = [];
+    //         this.btnBounds = [];
 
-            this.btns = []
-            this.btnText = [
-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-                "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
-                "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
-                "U", "V", "W", "X", "Y", "Z", ",", ".", "?", "!",
-                "<-", "^", " _______ ", "ENTER"
-            ];
+    //         this.btnText = [
+    //             "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+    //             "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+    //             "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
+    //             "U", "V", "W", "X", "Y", "Z", ",", ".", "?", "!",
+    //                "<-",   "^",     " _______ ",      "ENTER"
+    //         ];
 
-            this.next = opts.next
-            this.frameCounter = 0;
-            this.shakeText = false;
-            this.shakeTextCounter = 0;
+    //         this.next = opts.next
+    //         this.frameCounter = 0;
+    //         this.shakeText = false;
+    //         this.shakeTextCounter = 0;
 
-            const defaultBehaviour = (btn: Button) => {
-                if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
-                    this.text += this.btnText[btn.state[0]]
-                    this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
-                }
-                else {
-                    this.shakeText = true
-                }
-            }
+    //         const defaultBehaviour = (btn: Button) => {
+    //             if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
+    //                 this.text += this.btnText[btn.state[0]]
+    //                 this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
+    //             }
+    //             else {
+    //                 this.shakeText = true
+    //             }
+    //         }
 
-            for (let i = 0; i < 4; i++) {
-                const xDiff = screen().width / (KeyboardComponent.WIDTHS[i] + 1);
-                for (let j = 0; j < 10; j++) {
-                    this.btns.push(
-                        new Button({
-                            parent: null,
-                            style: ButtonStyles.Transparent,
-                            icon: bitmaps.create(10, 10),
-                            ariaId: "",
-                            x: (xDiff * (j + 1)) - (screen().width >> 1),
-                            y: (13 * (i + 1)) - 18,
-                            onClick: defaultBehaviour,
-                            state: [(i * 10) + j]
-                        })
-                    )
-                }
-            }
+    //         for (let i = 0; i < 4; i++) {
+    //             const xDiff = screen().width / (KeyboardComponent.WIDTHS[i] + 1);
+    //             for (let j = 0; j < 10; j++) {
+    //                 this.btns.push(
+    //                     new Button({
+    //                         parent: null,
+    //                         style: ButtonStyles.Transparent,
+    //                         icon: bitmaps.create(10, 10),
+    //                         ariaId: "",
+    //                         x: (xDiff * (j + 1)) - (screen().width >> 1),
+    //                         y: (13 * (i + 1)) - 18,
+    //                         onClick: defaultBehaviour,
+    //                         state: [(i * 10) + j]
+    //                     })
+    //                 )
+    //             }
+    //         }
 
-            const botRowBehaviours = [
-                () => {
-                    this.text =
-                        (this.text.length > 0)
-                            ? this.text.substr(0, this.text.length - 1)
-                            : this.text
-                    this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
-                },
-                () => { this.changeCase() },
-                () => {
-                    if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
-                        this.text += " ";
-                        this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON;
-                    }
-                    else {
-                        this.shakeText = true
-                    }
-                },
-                () => { this.next(this.text) }
-            ]
+    //         const botRowBehaviours = [
+    //             () => {
+    //                 this.text =
+    //                     (this.text.length > 0)
+    //                         ? this.text.substr(0, this.text.length - 1)
+    //                         : this.text
+    //                 this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
+    //             },
+    //             () => { this.changeCase() },
+    //             () => {
+    //                 if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
+    //                     this.text += " ";
+    //                     this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON;
+    //                 }
+    //                 else {
+    //                     this.shakeText = true
+    //                 }
+    //             },
+    //             () => { this.next(this.text) }
+    //         ]
 
-            const icons = [bitmaps.create(16, 10), bitmaps.create(10, 10), bitmaps.create(55, 10), bitmaps.create(33, 10)]
-            const x = [22, 38, 74, 124]
-            for (let i = 0; i < 4; i++) {
-                this.btns.push(
-                    new Button({
-                        parent: null,
-                        style: ButtonStyles.Transparent,
-                        icon: icons[i],
-                        ariaId: "",
-                        x: x[i] - (screen().width >> 1),
-                        y: (13 * 5) - 18,
-                        onClick: botRowBehaviours[i]
-                    })
-                )
-            }
+    //         const icons = [bitmaps.create(16, 10), bitmaps.create(10, 10), bitmaps.create(55, 10), bitmaps.create(33, 10)]
+    //         const x = [22, 38, 74, 124]
+    //         for (let i = 0; i < 4; i++) {
+    //             this.btns.push(
+    //                 new Button({
+    //                     parent: null,
+    //                     style: ButtonStyles.Transparent,
+    //                     icon: icons[i],
+    //                     ariaId: "",
+    //                     x: x[i] - (screen().width >> 1),
+    //                     y: (13 * 5) - 18,
+    //                     onClick: botRowBehaviours[i]
+    //                 })
+    //             )
+    //         }
 
-            this.changeCase()
-            this.navigator.addButtons(this.btns)
-        }
+    //         this.changeCase()
+    //     }
 
-        private changeCase() {
-            this.upperCase = !this.upperCase;
+    //     private changeCase() {
+    //         this.upperCase = !this.upperCase;
 
-            if (this.upperCase)
-                this.btnText = this.btnText.map((btn, i) =>
-                    btn = (i < 40) ? btn.toUpperCase() : btn
-                )
-            else
-                this.btnText = this.btnText.map((btn, i) =>
-                    btn = (i < 40) ? btn.toLowerCase() : btn
-                )
-        }
+    //         if (this.upperCase)
+    //             this.btnText = this.btnText.map((btn, i) =>
+    //                 btn = (i < 40) ? btn.toUpperCase() : btn
+    //             )
+    //         else
+    //             this.btnText = this.btnText.map((btn, i) =>
+    //                 btn = (i < 40) ? btn.toLowerCase() : btn
+    //             )
+    //     }
 
-        draw() {
-            this.frameCounter += 1
+    //     draw() {
+    //         super.draw()
+    //         this.frameCounter += 1
 
-            // Blue base colour:
-            Screen.fillRect(
-                Screen.LEFT_EDGE,
-                Screen.TOP_EDGE,
-                Screen.WIDTH,
-                Screen.HEIGHT,
-                6 // Blue
-            )
-
-            // Orange Keyboard with a black shadow on the bot & right edge (depth effect):
-
-            // Black border around right & bot edge:
-            Screen.fillRect(
-                Screen.LEFT_EDGE + 4,
-                Screen.TOP_EDGE + 47,
-                Screen.WIDTH - 6,
-                71,
-                15 // Black
-            )
-
-            // Orange keyboard that the white text will be ontop of:
-            Screen.fillRect(
-                Screen.LEFT_EDGE + 4,
-                Screen.TOP_EDGE + 44,
-                Screen.WIDTH - 8,
-                72,
-                4 // Orange
-            )
-
-            for (let i = 0; i < this.btns.length; i++) {
-                this.btns[i].draw()
-
-                const x = (screen().width >> 1) + this.btns[i].xfrm.localPos.x - (this.btns[i].icon.width >> 1) + 2
-                const y = (screen().height >> 1) + this.btns[i].xfrm.localPos.y + font.charHeight - 12
-                screen().print(this.btnText[i], x, y, 1) // White text
-            }
-
-            super.draw()
-        }
-    }
+    //         for (let i = 0; i < this.btns.length; i++) {
+    //             const x = (screen().width >> 1) + this.btns[i].xfrm.localPos.x - (this.btns[i].icon.width >> 1) + 2
+    //             const y = (screen().height >> 1) + this.btns[i].xfrm.localPos.y + font.charHeight - 12
+    //             screen().print(this.btnText[i], x, y, 1) // White text
+    //         }
+    //     }
+    // }
 
 
     export class TextButton {
@@ -921,8 +914,8 @@ namespace microcode {
         private textColour: number;
 
         constructor(opts: {
-            text: string, 
-            callback: () => void, 
+            text: string,
+            callback: () => void,
             x?: number,
             y?: number
             colour?: number,
@@ -933,8 +926,8 @@ namespace microcode {
             const x = (opts.x != null) ? opts.x : 0;
             const y = (opts.y != null) ? opts.y : 0;
             this.bounds = new Bounds({
-                top: y, 
-                left: x, 
+                top: y,
+                left: x,
                 width: (font.charWidth * (this.text.length + 1)) + 1,  // + 1 for the cursor in ButtonCollection to draw on top of.
                 height: font.charHeight + 2
             });
@@ -980,8 +973,8 @@ namespace microcode {
             )
         }
     }
-    
-    
+
+
     export class TextButtonCollection extends GUIComponentAbstract {
         private title: string;
         private textBtns: TextButton[];
@@ -1051,7 +1044,7 @@ namespace microcode {
             })
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => { })
-            
+
             control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
                 this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
 
@@ -1065,7 +1058,7 @@ namespace microcode {
                 this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
             })
 
-            control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => { 
+            control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => {
                 this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
 
                 this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.textBtns.length;
@@ -1152,8 +1145,8 @@ namespace microcode {
 
         private static focus(hideOthers: boolean) {
             if (hideOthers)
-                Window.components.forEach(component => {component.hide()})
-            Window.components.forEach(component => {component.unmakeActive()})
+                Window.components.forEach(component => { component.hide() })
+            Window.components.forEach(component => { component.unmakeActive() })
 
             Window.components[Window.currentComponentID].unHide()
             Window.components[Window.currentComponentID].makeActive()
@@ -1393,6 +1386,33 @@ namespace microcode {
                     this.drawCursorText()
                 }
             }
+        }
+    }
+
+
+    export class KeyboardComponent extends ButtonCollection {
+        constructor(opts: {
+            alignment: GUIComponentAlignment,
+            isActive: boolean,
+            next: (arg0: string) => void,
+            isHidden?: boolean,
+            xOffset?: number,
+            yOffset?: number,
+            xScaling?: number,
+            yScaling?: number,
+            colour?: number,
+        }) {
+            super({
+                alignment: opts.alignment,
+                btns: [[new Button({ icon: "accelerometer", onClick: () => basic.showNumber(0) })]],
+                isActive: opts.isActive,
+                isHidden: (opts.isHidden != null) ? opts.isHidden : false,
+                xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
+                yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
+                xScaling: opts.xScaling,
+                yScaling: opts.yScaling,
+                colour: opts.colour
+            })
         }
     }
 }
