@@ -380,13 +380,41 @@ namespace microcode {
             control.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.up.id,
-                () => this.context[0] = Math.min(this.context[0] + 10, this.maximum)
+                () => {
+                    let tick = true;
+                    control.onEvent(
+                        ControllerButtonEvent.Released,
+                        controller.up.id,
+                        () => tick = false
+                    )
+
+                    // Control logic:
+                    while (tick) {
+                        this.context[0] = Math.min(this.context[0] + 10, this.maximum)
+                        basic.pause(100)
+                    }
+                    control.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { })
+                }
             )
 
             control.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.down.id,
-                () => this.context[0] = Math.max(this.context[0] - 10, this.minimum)
+                () => {
+                    let tick = true;
+                    control.onEvent(
+                        ControllerButtonEvent.Released,
+                        controller.down.id,
+                        () => tick = false
+                    )
+
+                    // Control logic:
+                    while (tick) {
+                        this.context[0] = Math.max(this.context[0] - 10, this.minimum)
+                        basic.pause(100)
+                    }
+                    control.onEvent(ControllerButtonEvent.Released, controller.down.id, () => { })
+                }
             )
         }
 
