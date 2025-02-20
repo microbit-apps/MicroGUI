@@ -1,8 +1,6 @@
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
-    import SceneManager = user_interface_base.SceneManager
-
 
     import BACK_BUTTON_ERROR_KIND = user_interface_base.BACK_BUTTON_ERROR_KIND
     import FORWARD_BUTTON_ERROR_KIND = user_interface_base.FORWARD_BUTTON_ERROR_KIND
@@ -1153,7 +1151,7 @@ namespace microgui {
         private static currentComponentID: number;
 
         constructor(opts: {
-            app: App,
+            app: AppInterface,
             colour?: number,
             next?: (arg0: any[]) => void,
             back?: (arg0: any[]) => void,
