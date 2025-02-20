@@ -6,7 +6,6 @@ namespace microgui {
     import FORWARD_BUTTON_ERROR_KIND = user_interface_base.FORWARD_BUTTON_ERROR_KIND
     import INavigator = user_interface_base.INavigator
 
-
     import Cursor = user_interface_base.Cursor
     import CursorDir = user_interface_base.CursorDir
     import Picker = user_interface_base.Picker
@@ -1149,6 +1148,8 @@ namespace microgui {
         private static components: GUIComponentAbstract[];
         private static componentQty: number;
         private static currentComponentID: number;
+        private static actAsScene: boolean;
+        private static show: boolean;
 
         constructor(opts: {
             app: AppInterface,
@@ -1156,6 +1157,7 @@ namespace microgui {
             next?: (arg0: any[]) => void,
             back?: (arg0: any[]) => void,
             components?: GUIComponentAbstract[],
+            actAsScene?: boolean,
             hideByDefault?: boolean
         }) {
             super(opts.app)
@@ -1166,6 +1168,8 @@ namespace microgui {
             Window.components = opts.components
             Window.componentQty = Window.components.length
             Window.currentComponentID = 0
+            Window.actAsScene = (opts.actAsScene != null) ? opts.actAsScene : false;
+            Window.show = (Window.actAsScene) ? true : false;
 
             if (Window.components != null && opts.hideByDefault)
                 Window.focus(true)
@@ -1175,6 +1179,15 @@ namespace microgui {
                 Window.focus(true)
             })
         }
+
+        public activate() {
+            Window.show = true;
+        }
+
+        public deactivate() {
+            Window.show = false;
+        }
+
 
         public static makeComponentActive(componentID: number, hideOthers: boolean) {
             Window.currentComponentID = componentID;
@@ -1203,25 +1216,27 @@ namespace microgui {
         }
 
         draw() {
-            super.draw()
+            if (Window.show) {
+                super.draw()
 
-            screen().fillRect(
-                0,
-                0,
-                screen().width,
-                screen().height,
-                this.backgroundColor
-            )
+                screen().fillRect(
+                    0,
+                    0,
+                    screen().width,
+                    screen().height,
+                    this.backgroundColor
+                )
 
-            if (Window.components != null) {
-                Window.components.forEach(component => {
-                    if (!component.hidden && !component.active)
-                        component.draw()
-                })
+                if (Window.components != null) {
+                    Window.components.forEach(component => {
+                        if (!component.hidden && !component.active)
+                            component.draw()
+                    })
+                }
+
+                // Always draw active ontop
+                Window.components[Window.currentComponentID].draw()
             }
-
-            // Always draw active ontop
-            Window.components[Window.currentComponentID].draw()
         }
     }
 
