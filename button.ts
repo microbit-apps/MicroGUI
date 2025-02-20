@@ -5,7 +5,7 @@ namespace microcode {
             public bottom: number,
             public left: number,
             public right: number
-        ) {}
+        ) { }
     }
 
     export class ButtonStyle {
@@ -13,7 +13,7 @@ namespace microcode {
             public fill: number,
             public borders: Borders,
             public shadow: boolean
-        ) {}
+        ) { }
     }
 
     export namespace ButtonStyles {
@@ -147,8 +147,8 @@ namespace microcode {
             return !this.icon.invisible
         }
 
-        public hover(hov: boolean) {}
-        public update() {}
+        public hover(hov: boolean) { }
+        public update() { }
 
         isOffScreenX(): boolean {
             return this.icon.isOffScreenX()
@@ -291,7 +291,7 @@ namespace microcode {
                 ? icons.get(this.iconId)
                 : this.iconId
         }
-        
+
         public setIcon(iconId: string, img?: Bitmap) {
             this.iconId = iconId
             if (img) this.icon.setImage(img)
@@ -315,7 +315,7 @@ namespace microcode {
             super.draw()
 
             if (this.dynamicBoundaryColorsOn) {
-                const boundaryColour = (this.selected && this.pressable) ? 7: this.boundaryColor 
+                const boundaryColour = (this.selected && this.pressable) ? 7 : this.boundaryColor
 
                 for (let dist = 1; dist <= 3; dist++) {
                     Screen.outlineBoundsXfrm(

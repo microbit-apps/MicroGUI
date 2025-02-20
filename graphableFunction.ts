@@ -1,4 +1,4 @@
-namespace microcode {
+namespace microgui {
 
     export interface IGraphableFunction {
         draw(fromX: number, color: number): void;
@@ -35,23 +35,23 @@ namespace microcode {
             this.fnToSample = fnToSample
         }
 
-        getName(): string {return "name"}
-        getReading(): number {return 0}
-        getValueAt(x: number): number {return this.fnToSample(x);}
-        getNormalisedReading(): number {return Math.abs(this.getReading()) / (Math.abs(this.getMinimum()) + this.getMaximum())}
-        getMinimum(): number {return 0;}
-        getMaximum(): number {return 100;}
+        getName(): string { return "name" }
+        getReading(): number { return 0 }
+        getValueAt(x: number): number { return this.fnToSample(x); }
+        getNormalisedReading(): number { return Math.abs(this.getReading()) / (Math.abs(this.getMinimum()) + this.getMaximum()) }
+        getMinimum(): number { return 0; }
+        getMaximum(): number { return 100; }
 
-        getMaxBufferSize(): number {return this.maxBufferSize}
-        getNthReading(n: number): number {return this.dataBuffer[n]}
-        getNthHeightNormalisedReading(n: number): number {return this.heightNormalisedDataBuffer[n]}
-        getBufferLength(): number {return this.dataBuffer.length}
-        getHeightNormalisedBufferLength(): number {return this.heightNormalisedDataBuffer.length}
+        getMaxBufferSize(): number { return this.maxBufferSize }
+        getNthReading(n: number): number { return this.dataBuffer[n] }
+        getNthHeightNormalisedReading(n: number): number { return this.heightNormalisedDataBuffer[n] }
+        getBufferLength(): number { return this.dataBuffer.length }
+        getHeightNormalisedBufferLength(): number { return this.heightNormalisedDataBuffer.length }
         // getPeriod(): number {return this.config.period;}
         // getMeasurements(): number {return this.config.measurements}
         // hasMeasurements(): boolean {return this.config.measurements > 0;}
 
-        
+
         /**
          * Change the size of the buffer used for this.dataBuffer & this.normalisedBuffer
          * Will shift out old this.dataBuffer & this.normalisedBuffer values from the front.
@@ -120,9 +120,9 @@ namespace microcode {
                 for (let j = -(PLOT_SMOOTHING_CONSTANT / 2); j < PLOT_SMOOTHING_CONSTANT / 2; j++) {
                     screen().drawLine(
                         fromX + i - 1,
-                        this.heightNormalisedDataBuffer[i] + j ,//+ (screen().height / 2),
+                        this.heightNormalisedDataBuffer[i] + j,//+ (screen().height / 2),
                         fromX + i,
-                        this.heightNormalisedDataBuffer[i + 1] + j ,//+ (screen().height / 2),
+                        this.heightNormalisedDataBuffer[i + 1] + j,//+ (screen().height / 2),
                         color
                     );
                 }

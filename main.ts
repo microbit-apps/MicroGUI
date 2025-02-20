@@ -1,5 +1,5 @@
-namespace microcode {
-    const app = new App();
+namespace microgui {
+    const app = new microgui.App();
 
     // const simpleTextComponent = new TextBox({
     //     alignment: GUIComponentAlignment.TOP,
@@ -100,7 +100,7 @@ namespace microcode {
     // const window = new Window({ app, components: [comp1, comp2] })
     // app.pushScene(window)
 
-    
+
 
     const txtBtnComp = new TextButtonCollection({
         alignment: GUIComponentAlignment.CENTRE,

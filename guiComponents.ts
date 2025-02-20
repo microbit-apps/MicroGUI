@@ -1,4 +1,23 @@
-namespace microcode {
+namespace microgui {
+    import AppInterface = user_interface_base.AppInterface
+    import Scene = user_interface_base.Scene
+    import SceneManager = user_interface_base.SceneManager
+
+
+    import BACK_BUTTON_ERROR_KIND = user_interface_base.BACK_BUTTON_ERROR_KIND
+    import FORWARD_BUTTON_ERROR_KIND = user_interface_base.FORWARD_BUTTON_ERROR_KIND
+    import INavigator = user_interface_base.INavigator
+
+
+    import Cursor = user_interface_base.Cursor
+    import CursorDir = user_interface_base.CursorDir
+    import Picker = user_interface_base.Picker
+
+    import Bounds = user_interface_base.Bounds
+    import Screen = user_interface_base.Screen
+    import Button = user_interface_base.Button
+    import font = user_interface_base.font
+
 
     /**
      * Util function used within this file, useful for ensuring that prior bindings are not kept when using a new component.
@@ -91,6 +110,7 @@ namespace microcode {
             border?: boolean,
             showBackground?: boolean
         }) {
+
             super()
 
             this.alignment = opts.alignment;
@@ -118,7 +138,7 @@ namespace microcode {
             const left = pos[0];
             const top = pos[1];
 
-            this.bounds = new microcode.Bounds({
+            this.bounds = new Bounds({
                 width: this.unscaledWidth * this.xScaling,
                 height: this.unscaledHeight * this.yScaling,
                 left,
@@ -200,7 +220,7 @@ namespace microcode {
             if (this.bounds != null) {
                 this.xScaling = xScaling
                 this.yScaling = yScaling
-                this.bounds = new microcode.Bounds({
+                this.bounds = new Bounds({
                     width: this.unscaledWidth * this.xScaling,
                     height: this.unscaledHeight * this.yScaling,
                     left: this.bounds.left,
@@ -1385,7 +1405,7 @@ namespace microcode {
             if (text) {
                 const pos = this.cursorBounds;
                 const n = text.length
-                const font = microcode.font
+                const font = user_interface_base.font
                 const w = font.charWidth * n
                 const h = font.charHeight
                 const x = Math.max(

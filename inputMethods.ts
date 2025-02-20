@@ -1,4 +1,14 @@
-namespace microcode {
+namespace microgui {
+    import AppInterface = user_interface_base.AppInterface
+    import Scene = user_interface_base.Scene
+    import CursorSceneWithPriorPage = user_interface_base.CursorSceneWithPriorPage
+    import GridNavigator = user_interface_base.GridNavigator
+    import ButtonStyles = user_interface_base.ButtonStyles
+    import Screen = user_interface_base.Screen
+    import Button = user_interface_base.Button
+    import font = user_interface_base.font
+
+
     abstract class AbstractInputMethod extends Scene {
         protected titleText: string;
 
@@ -16,6 +26,7 @@ namespace microcode {
         }
     }
 
+
     export class TickerMenu extends AbstractInputMethod {
         private tickerValues: number[];
         private tickerIncrements: number[];
@@ -25,7 +36,7 @@ namespace microcode {
         private back: () => void;
 
         constructor(
-            app: App,
+            app: AppInterface,
             titleText: string,
             defaultTickerValues: number[],
             backgroundColor?: number,
@@ -181,8 +192,8 @@ namespace microcode {
         private shakeText: boolean
         private shakeTextCounter: number
 
-        constructor(app: App, next: (arg0: string) => void) {
-            super(app, function () { }, new GridNavigator(5, 5, KeyboardMenu.WIDTHS))//, new GridNavigator(5, 10))
+        constructor(app: AppInterface, next: (arg0: string) => void) {
+            super(app, function() { }, new GridNavigator(5, 5, KeyboardMenu.WIDTHS))//, new GridNavigator(5, 10))
             this.text = ""
             this.upperCase = true
 
@@ -399,7 +410,7 @@ namespace microcode {
         }
     }
 
-    
+
     export class CalculatorMenu extends CursorSceneWithPriorPage {
         private static WIDTHS: number[] = [10, 5, 4]
         private btns: Button[]
@@ -410,8 +421,8 @@ namespace microcode {
         private shakeText: boolean
         private shakeTextCounter: number
 
-        constructor(app: App, next: (arg0: GraphableFunction) => void) {
-            super(app, function () { }, new GridNavigator(3, 1, CalculatorMenu.WIDTHS))
+        constructor(app: AppInterface, next: (arg0: GraphableFunction) => void) {
+            super(app, function() { }, new GridNavigator(3, 1, CalculatorMenu.WIDTHS))
             this.text = ""
 
             this.btns = []
@@ -650,9 +661,9 @@ namespace microcode {
         private btnText: string[]
         private callbacks: ((btn: Button) => void)[][]
 
-        constructor(app: App, callbacks: ((btn: Button) => void)[][], priorFn?: () => void) {
+        constructor(app: AppInterface, callbacks: ((btn: Button) => void)[][], priorFn?: () => void) {
             super(app,
-                (priorFn != null) ? priorFn : function () { },
+                (priorFn != null) ? priorFn : function() { },
                 new GridNavigator(
                     callbacks.length,
                     (callbacks.length > 0) ? callbacks[0].length : 0

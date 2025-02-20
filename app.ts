@@ -1,4 +1,8 @@
-namespace microcode {
+namespace microgui {
+    import AppInterface = user_interface_base.AppInterface
+    import Scene = user_interface_base.Scene
+    import SceneManager = user_interface_base.SceneManager
+
     // Auto-save slot
     export const SAVESLOT_AUTO = "sa"
 
@@ -7,13 +11,17 @@ namespace microcode {
         version?: string
     }
 
+    // application configuration
+    // user_interface_base.getIcon = (id) => icons.get(id)
+    user_interface_base.resolveTooltip = (ariaId: string) => ariaId
+
+
     export class App {
-        private sceneManager: SceneManager 
+        private sceneManager: SceneManager
 
         constructor() {
             // One interval delay to ensure all static constructors have executed.
             basic.pause(10)
-            reportEvent("app.start")
 
             this.sceneManager = new SceneManager()
             datalogger.includeTimestamp(FlashLogTimeStampFormat.None)
@@ -25,6 +33,14 @@ namespace microcode {
 
         public popScene() {
             this.sceneManager.popScene()
+        }
+
+        public save(slot: string, buffer: Buffer): boolean {
+            return true;
+        }
+
+        public load(slot: string): Buffer {
+            return Buffer.create(0)
         }
     }
 }
