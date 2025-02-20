@@ -7,7 +7,7 @@
         "radio": "*",
         "microphone": "*",
         "datalogger": "*",
-        "arcadeshield": "github:microbit-apps/arcadeshield#v0.1.19"
+        "display-shield": "github:microbit-apps/display-shield#v1.0.2"
     },
     "files": [
         "main.blocks",
