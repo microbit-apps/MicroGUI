@@ -52,7 +52,7 @@ namespace microgui {
      * Greatly simplifies the creation & alignment of GUI components.
      * A GUI Component has a .context for storage of hidden component state.
      */
-    abstract class GUIComponentAbstract extends Scene {
+    export abstract class GUIComponentAbstract extends Scene {
         /** Which of the 9 options should this component snap to? */
         private alignment: GUIComponentAlignment
 
