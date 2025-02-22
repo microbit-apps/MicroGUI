@@ -107,7 +107,6 @@ namespace microgui {
             border?: boolean,
             showBackground?: boolean
         }) {
-
             super()
 
             this.alignment = opts.alignment;
@@ -976,6 +975,7 @@ namespace microgui {
                 width: (font.charWidth * (this.text.length + 1)) + 1,  // + 1 for the cursor in ButtonCollection to draw on top of.
                 height: font.charHeight + 2
             });
+
             this.shadowBounds = new Bounds({
                 top: this.bounds.top,
                 left: this.bounds.left + 1,
@@ -1079,6 +1079,12 @@ namespace microgui {
             this.setupButtonBindings();
         }
 
+
+        public makeActive() {
+            super.makeActive();
+            this.setupButtonBindings();
+        }
+
         setupButtonBindings() {
             unbindShieldButtons();
 
@@ -1145,11 +1151,10 @@ namespace microgui {
      * One component is active at a time
      */
     export class Window extends Scene {
-        private static components: GUIComponentAbstract[];
-        private static componentQty: number;
-        private static currentComponentID: number;
-        private static actAsScene: boolean;
-        private static show: boolean;
+        private components: GUIComponentAbstract[];
+        private currentComponentID: number;
+        private actAsScene: boolean;
+        private show: boolean;
 
         constructor(opts: {
             app: AppInterface,
@@ -1157,44 +1162,41 @@ namespace microgui {
             next?: (arg0: any[]) => void,
             back?: (arg0: any[]) => void,
             components?: GUIComponentAbstract[],
-            actAsScene?: boolean,
-            hideByDefault?: boolean
+            actAsScene?: boolean
         }) {
             super(opts.app)
 
             if (opts.colour != null)
                 this.backgroundColor = opts.colour
 
-            Window.components = opts.components
-            Window.componentQty = Window.components.length
-            Window.currentComponentID = 0
-            Window.actAsScene = (opts.actAsScene != null) ? opts.actAsScene : false;
-            Window.show = (Window.actAsScene) ? true : false;
+            this.components = opts.components
+            this.currentComponentID = 0
+            this.actAsScene = (opts.actAsScene != null) ? opts.actAsScene : false;
+            this.show = (this.actAsScene) ? true : false;
 
-            if (Window.components != null && opts.hideByDefault)
-                Window.focus(true)
+            if (this.components != null)
+                this.focus(true)
 
             input.onButtonPressed(1, function() {
-                Window.currentComponentID = (Window.currentComponentID + 1) % Window.componentQty
-                Window.focus(true)
+                this.currentComponentID = (this.currentComponentID + 1) % this.componentQty
+                this.focus(true)
             })
         }
 
         public activate() {
-            Window.show = true;
+            this.show = true;
         }
 
         public deactivate() {
-            Window.show = false;
+            this.show = false;
         }
 
-
-        public static makeComponentActive(componentID: number, hideOthers: boolean) {
-            Window.currentComponentID = componentID;
-            Window.focus(hideOthers);
+        public makeComponentActive(componentID: number, hideOthers: boolean) {
+            this.currentComponentID = componentID;
+            this.focus(hideOthers);
         }
 
-        public static updateComponentsContext(componentID: number, context: any[]) {
+        public updateComponentsContext(componentID: number, context: any[]) {
             this.components[componentID].addContext(context)
         }
 
@@ -1202,21 +1204,21 @@ namespace microgui {
             super.startup()
         }
 
-        private static focus(hideOthers: boolean) {
+        private focus(hideOthers: boolean) {
             if (hideOthers)
-                Window.components.forEach(component => { component.hide() })
-            Window.components.forEach(component => { component.unmakeActive() })
+                this.components.forEach(component => { component.hide() })
+            this.components.forEach(component => { component.unmakeActive() })
 
-            Window.components[Window.currentComponentID].unHide()
-            Window.components[Window.currentComponentID].makeActive()
+            this.components[this.currentComponentID].unHide()
+            this.components[this.currentComponentID].makeActive()
         }
 
         showAllComponents() {
-            Window.components.forEach(component => component.unHide())
+            this.components.forEach(component => component.unHide())
         }
 
         draw() {
-            if (Window.show) {
+            if (this.show) {
                 super.draw()
 
                 screen().fillRect(
@@ -1227,15 +1229,15 @@ namespace microgui {
                     this.backgroundColor
                 )
 
-                if (Window.components != null) {
-                    Window.components.forEach(component => {
+                if (this.components != null) {
+                    this.components.forEach(component => {
                         if (!component.hidden && !component.active)
                             component.draw()
                     })
                 }
 
                 // Always draw active ontop
-                Window.components[Window.currentComponentID].draw()
+                this.components[this.currentComponentID].draw()
             }
         }
     }
