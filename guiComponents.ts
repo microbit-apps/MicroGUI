@@ -1148,19 +1148,16 @@ namespace microgui {
      * Holds other components,
      * One component is active at a time
      */
-    export class Window extends Scene {
+    export class GUIComponentScene extends Scene {
         private components: GUIComponentAbstract[];
         private currentComponentID: number;
-        private actAsScene: boolean;
-        private show: boolean;
 
         constructor(opts: {
             app: AppInterface,
             colour?: number,
             next?: (arg0: any[]) => void,
             back?: (arg0: any[]) => void,
-            components?: GUIComponentAbstract[],
-            actAsScene?: boolean
+            components?: GUIComponentAbstract[]
         }) {
             super(opts.app)
 
@@ -1169,24 +1166,18 @@ namespace microgui {
 
             this.components = opts.components
             this.currentComponentID = 0
-            this.actAsScene = (opts.actAsScene != null) ? opts.actAsScene : false;
-            this.show = (this.actAsScene) ? true : false;
-
-            if (this.components != null)
-                this.focus(true)
-
-            input.onButtonPressed(1, function() {
-                this.currentComponentID = (this.currentComponentID + 1) % this.componentQty
-                this.focus(true)
-            })
         }
 
         public activate() {
-            this.show = true;
+            super.activate();
+            this.focus(true)
         }
 
         public deactivate() {
-            this.show = false;
+            super.activate();
+
+            this.components[this.currentComponentID].hide()
+            this.components[this.currentComponentID].unmakeActive()
         }
 
         public makeComponentActive(componentID: number, hideOthers: boolean) {
@@ -1216,27 +1207,25 @@ namespace microgui {
         }
 
         draw() {
-            if (this.show) {
-                super.draw()
+            super.draw()
 
-                screen().fillRect(
-                    0,
-                    0,
-                    screen().width,
-                    screen().height,
-                    this.backgroundColor
-                )
+            screen().fillRect(
+                0,
+                0,
+                screen().width,
+                screen().height,
+                this.backgroundColor
+            )
 
-                if (this.components != null) {
-                    this.components.forEach(component => {
-                        if (!component.hidden && !component.active)
-                            component.draw()
-                    })
-                }
-
-                // Always draw active ontop
-                this.components[this.currentComponentID].draw()
+            if (this.components != null) {
+                this.components.forEach(component => {
+                    if (!component.hidden && !component.active)
+                        component.draw()
+                })
             }
+
+            // Always draw active ontop
+            this.components[this.currentComponentID].draw()
         }
     }
 
