@@ -1075,8 +1075,6 @@ namespace microgui {
                 });
                 this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
             }
-
-            this.setupButtonBindings();
         }
 
 
