@@ -12,9 +12,8 @@ namespace microgui {
     }
 
     // application configuration
-    // user_interface_base.getIcon = (id) => icons.get(id)
+    user_interface_base.getIcon = (id) => user_interface_base.icons.get(id)
     user_interface_base.resolveTooltip = (ariaId: string) => ariaId
-
 
     export class App {
         private sceneManager: SceneManager
