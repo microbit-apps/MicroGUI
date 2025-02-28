@@ -193,7 +193,7 @@ namespace microgui {
         private shakeTextCounter: number
 
         constructor(app: AppInterface, next: (arg0: string) => void) {
-            super(app, function() { }, new GridNavigator(5, 5, KeyboardMenu.WIDTHS))//, new GridNavigator(5, 10))
+            super(app, function() { }, new GridNavigator())//, 5, 5, KeyboardMenu.WIDTHS, new GridNavigator(5, 10))
             this.text = ""
             this.upperCase = true
 
@@ -281,7 +281,7 @@ namespace microgui {
             }
 
             this.changeCase()
-            this.navigator.addButtons(this.btns)
+            this.navigator.setBtns([this.btns])
         }
 
         private changeCase() {
@@ -422,7 +422,7 @@ namespace microgui {
         private shakeTextCounter: number
 
         constructor(app: AppInterface, next: (arg0: GraphableFunction) => void) {
-            super(app, function() { }, new GridNavigator(3, 1, CalculatorMenu.WIDTHS))
+            super(app, function() { }, new GridNavigator()) // 3, 1, CalculatorMenu.WIDTHS
             this.text = ""
 
             this.btns = []
@@ -540,7 +540,7 @@ namespace microgui {
                 }
             }
 
-            this.navigator.addButtons(this.btns)
+            this.navigator.setBtns([this.btns])
         }
 
         draw() {
@@ -665,8 +665,8 @@ namespace microgui {
             super(app,
                 (priorFn != null) ? priorFn : function() { },
                 new GridNavigator(
-                    callbacks.length,
-                    (callbacks.length > 0) ? callbacks[0].length : 0
+                    // callbacks.length,
+                    // (callbacks.length > 0) ? callbacks[0].length : 0
                 )
             )
             this.btns = []
@@ -691,7 +691,7 @@ namespace microgui {
                     )
                 }
             }
-            this.navigator.addButtons(this.btns)
+            this.navigator.setBtns([this.btns])
         }
 
         draw() {

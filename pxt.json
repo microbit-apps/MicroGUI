@@ -7,7 +7,7 @@
         "radio": "*",
         "microphone": "*",
         "datalogger": "*",
-        "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.13",
+        "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.16",
         "display-shield": "github:microbit-apps/display-shield#v1.0.4"
     },
     "files": [
