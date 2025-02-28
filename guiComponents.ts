@@ -1,3 +1,4 @@
+
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
@@ -1164,13 +1165,23 @@ namespace microgui {
             if (opts.colour != null)
                 this.backgroundColor = opts.colour
 
-            this.components = opts.components
+            this.components = (opts.components != null) ? opts.components : []
             this.currentComponentID = 0
+        }
+
+
+        public addComponents(newComponents: GUIComponentAbstract[]) {
+            this.components = this.components.concat(newComponents)
+
+            if (this.components.length == newComponents.length) {
+                this.components[this.currentComponentID].makeActive()
+            }
         }
 
         public activate() {
             super.activate();
-            this.focus(true)
+            if (this.components.length > 0)
+                this.focus(true)
         }
 
         public deactivate() {
@@ -1480,3 +1491,4 @@ namespace microgui {
         }
     }
 }
+
