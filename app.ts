@@ -1,5 +1,4 @@
 namespace microgui {
-    import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
     import SceneManager = user_interface_base.SceneManager
 
@@ -23,7 +22,6 @@ namespace microgui {
             basic.pause(10)
 
             this.sceneManager = new SceneManager()
-            datalogger.includeTimestamp(FlashLogTimeStampFormat.None)
         }
 
         public pushScene(scene: Scene) {

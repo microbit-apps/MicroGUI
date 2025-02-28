@@ -58,12 +58,12 @@ namespace microcode {
     const comp3 = new ButtonCollection({
         alignment: GUIComponentAlignment.TOP,
         btns: [
-            // [ // Row 1:
-            //     new Button({ icon: "thermometer", ariaId: "0", x: 5, y: 5, onClick: () => basic.showNumber(0) }),
-            //     new Button({ icon: "thermometer", ariaId: "1", x: 25, y: 5, onClick: () => basic.showNumber(1) }),
-            //     new Button({ icon: "thermometer", ariaId: "2", x: 45, y: 5, onClick: () => basic.showNumber(2) }),
-            //     new Button({ icon: "thermometer", ariaId: "3", x: 65, y: 5, onClick: () => basic.showNumber(3) }),
-            // ],
+            [ // Row 1:
+                new Button({ icon: "thermometer", ariaId: "0", x: 5, y: 5, onClick: () => basic.showNumber(0) }),
+                new Button({ icon: "thermometer", ariaId: "1", x: 25, y: 5, onClick: () => basic.showNumber(1) }),
+                new Button({ icon: "thermometer", ariaId: "2", x: 45, y: 5, onClick: () => basic.showNumber(2) }),
+                new Button({ icon: "thermometer", ariaId: "3", x: 65, y: 5, onClick: () => basic.showNumber(3) }),
+            ],
             // [ // Row 2:
             //     new Button({ icon: "thermometer", ariaId: "4", x: 5, y: 30, onClick: () => basic.showNumber(4) }),
             //     new Button({ icon: "green_tick", ariaId: "5", x: 65, y: 30, onClick: () => { } })//GUIComponentScene.makeComponentActive(0, true) })
@@ -84,10 +84,8 @@ namespace microcode {
         colour: 6,
     })
 
-    // const window = new GUIComponentScene({ app, components: [comp3] })
-    // app.pushScene(window)
-
-    screen().fill(6)
+    const window = new GUIComponentScene({ app, components: [comp3] })
+    app.pushScene(window)
 
     // const comp3 = new ButtonCollection({
     //     alignment: GUIComponentAlignment.TOP,
