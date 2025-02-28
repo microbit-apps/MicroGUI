@@ -484,6 +484,10 @@ namespace microgui {
 
     export class GUIGraph extends TextBox {
         private graphableFns: GraphableFunction[]
+        /** Reads the graphableFns if the frameCounter is >= this sampling rate. */
+        private sampleRate: number = 8;
+        /** Increments each draw() {}, see this.sampleRate */
+        private frameCounter: number;
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
@@ -513,27 +517,36 @@ namespace microgui {
             })
 
             this.graphableFns = opts.graphableFns
+
             const bufferScalar = (opts.xScaling != null) ? opts.xScaling : 1
             this.graphableFns.forEach(gf => gf.setBufferSize(60 * bufferScalar))
+            this.frameCounter = 0;
         }
 
         draw() {
             super.draw()
+
+            this.frameCounter++;
 
             const left = this.bounds.left
             const top = this.bounds.top
 
             this.bounds.fillRect(15)
 
+
             //-------------------------------
             // Load the buffer with new data:
             //-------------------------------
 
-            for (let i = 0; i < this.graphableFns.length; i++) {
-                const hasSpace = this.graphableFns[i].getBufferLength() < this.graphableFns[i].getMaxBufferSize()
-                this.graphableFns[i].readIntoBufferOnce((screen().height >> 1) + top, this.bounds.height) // 8
-            }
+            // Only poll and draw at the sampleRate, don't basic.pause() since there are other components.
+            if (this.frameCounter >= this.sampleRate) {
+                for (let i = 0; i < this.graphableFns.length; i++) {
+                    const hasSpace = this.graphableFns[i].getBufferLength() < this.graphableFns[i].getMaxBufferSize()
+                    this.graphableFns[i].readIntoBufferOnce((screen().height >> 1) + top, this.bounds.height) // 8
+                }
 
+                this.frameCounter = 0;
+            }
             //----------------------------
             // Draw sensor lines & ticker:
             //----------------------------
@@ -636,7 +649,6 @@ namespace microgui {
                 this.bounds.top + this.bounds.height + (screen().height >> 1) + 3,
                 1
             )
-            basic.pause(100);
         }
     }
 
@@ -1169,7 +1181,6 @@ namespace microgui {
             this.currentComponentID = 0
         }
 
-
         public addComponents(newComponents: GUIComponentAbstract[]) {
             this.components = this.components.concat(newComponents)
 
@@ -1181,7 +1192,7 @@ namespace microgui {
         public activate() {
             super.activate();
             if (this.components.length > 0)
-                this.focus(true)
+                this.components[this.currentComponentID].makeActive()
         }
 
         public deactivate() {
