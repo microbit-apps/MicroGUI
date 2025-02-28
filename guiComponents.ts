@@ -1265,6 +1265,10 @@ namespace microgui {
                 border: opts.border
             })
 
+            // Set to null in case the opts.btns are [[]].
+            // This is checked before drawing.
+            this.cursorBounds = null;
+
             if (opts.btns != null) {
                 this.btns = opts.btns;
 
@@ -1281,16 +1285,26 @@ namespace microgui {
                 this.numberOfCols = this.btns.map(row => row.length)
                 this.numberOfRows = this.btns.length
 
-                this.cursorBounds = new Bounds({
-                    width: this.btns[0][0].width + 4,
-                    height: this.btns[0][0].height + 4,
-                    left: this.btns[0][0].xfrm.localPos.x - (this.btns[0][0].width >> 1) - 2,
-                    top: this.btns[0][0].xfrm.localPos.y - (this.btns[0][0].height >> 1) - 2
-                })
-                this.cursorOutlineColour = (opts.cursorColour != null) ? opts.cursorColour : 9; // Default is light blue
-                this.cursorRow = 0;
-                this.cursorCol = 0;
+                // Its possible the programmer makes the first row empty and fills it later:
+                let startingRow = null;
+                for (let i = 0; i < this.numberOfRows; i++) {
+                    if (this.numberOfCols[i] > 0) {
+                        startingRow = i;
+                        break;
+                    }
+                }
 
+                if (startingRow != null) {
+                    this.cursorBounds = new Bounds({
+                        width: this.btns[0][0].width + 4,
+                        height: this.btns[0][0].height + 4,
+                        left: this.btns[0][0].xfrm.localPos.x - (this.btns[0][0].width >> 1) - 2,
+                        top: this.btns[0][0].xfrm.localPos.y - (this.btns[0][0].height >> 1) - 2
+                    })
+                    this.cursorOutlineColour = (opts.cursorColour != null) ? opts.cursorColour : 9; // Default is light blue
+                    this.cursorRow = startingRow;
+                    this.cursorCol = 0;
+                }
                 if (this.isActive)
                     this.bindShieldButtons()
             }
@@ -1426,13 +1440,13 @@ namespace microgui {
         draw() {
             if (!this.isHidden) {
                 super.draw()
-                if (this.isActive) {
+                if (this.isActive && this.cursorBounds != null) {
                     this.drawCursor()
                 }
 
                 this.btns.forEach(btnRow => btnRow.forEach(btn => btn.draw()))
 
-                if (this.isActive) {
+                if (this.isActive && this.cursorBounds != null) {
                     this.drawCursorText()
                 }
             }
