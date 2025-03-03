@@ -1239,23 +1239,21 @@ namespace microgui {
             this.title = (opts.title != null) ? opts.title : "";
             this.btns = (opts.btns != null) ? opts.btns : [];
 
-            const titleYOffset = (this.title != "") ? 13 : 0;
-
             const btnXOffset = (this.btns.length > 0) ? (this.bounds.width / (this.btns.length + 1)) : 0;
 
-            const xBorder = this.bounds.width * 0.08;
+            const xBorder = this.bounds.width * 0.15;
             const yBorder = this.bounds.height * 0.05;
             const ySpacing = (this.bounds.height - yBorder) / (this.btns.length + 1);
 
             for (let i = 0; i < this.btns.length; i++) {
                 this.btns[i].setPosition(
                     xBorder + this.bounds.left + this.bounds.width, 
-                    titleYOffset + ((i + 1) * ySpacing)
+                    (i + 1) * ySpacing
                 );
                 this.btns[i].setSelected(false)
             }
 
-            if (this.btns) {
+            if (this.btns.length > 0) {
                 this.selectedTextBtnIndex = 0
                 this.btns[this.selectedTextBtnIndex].setSelected(true)
             }
