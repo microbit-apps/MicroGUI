@@ -1,4 +1,5 @@
 
+
 namespace microcode {
     import App = microgui.App
     import Scene = user_interface_base.Scene
@@ -14,6 +15,8 @@ namespace microcode {
     import TextButton = microgui.TextButton
     import GraphableFunction = microgui.GraphableFunction
     import GUIGraph = microgui.GUIGraph
+    import RadioButtonCollection = microgui.RadioButtonCollection
+    import RadioButton = microgui.RadioButton
 
     control.singleSimulator();
     const app = new App();
@@ -22,20 +25,19 @@ namespace microcode {
     // Comment out the examples you aren't using:
 
 
-
     // Example 1a:
 
-    const simpleTextComponent = new TextBox({
-        alignment: GUIComponentAlignment.BOT,
-        isActive: false,
-        title: "Title Text :)", // optional arg
-        text: ["Hello there,", "I hope you are well.", "Isn't this neat?"], // optional arg
-        colour: 6, // optional arg
-        xScaling: 1.7, // optional arg
-    })
+    // const simpleTextComponent = new TextBox({
+    //     alignment: GUIComponentAlignment.BOT,
+    //     isActive: false,
+    //     title: "Title Text :)", // optional arg
+    //     text: ["Hello there,", "I hope you are well.", "Isn't this neat?"], // optional arg
+    //     colour: 6, // optional arg
+    //     xScaling: 1.7, // optional arg
+    // })
 
-    const gcs = new GUIComponentScene({ app, components: [simpleTextComponent] })
-    app.pushScene(gcs)
+    // const gcs = new GUIComponentScene({ app, components: [simpleTextComponent] })
+    // app.pushScene(gcs)
 
 
 
@@ -121,6 +123,42 @@ namespace microcode {
     // app.pushScene(gcs)
 
 
+    // const buttonCollection = new ButtonCollection({
+    //     alignment: GUIComponentAlignment.TOP,
+    //     btns: [
+    //         [ // Row 1:
+    //             new Button({ icon: "accelerometer", ariaId: "0", onClick: () => basic.showNumber(0) }),
+    //             new Button({ icon: "pin_0", ariaId: "1", onClick: () => basic.showNumber(1) }),
+    //             new Button({ icon: "pin_1", ariaId: "2", onClick: () => basic.showNumber(2) }),
+    //             new Button({ icon: "pin_2", ariaId: "3", onClick: () => basic.showNumber(3) }),
+    //         ],
+    //         [ // Row 2:
+    //             new Button({ icon: "thermometer", ariaId: "4", onClick: () => basic.showNumber(4) }),
+    //             new Button({ icon: "microphone", ariaId: "5", onClick: () => basic.showNumber(5) })
+    //         ],
+    //         [ // Row 3:
+    //             new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+    //             new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+    //             new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+                
+    //         ],
+    //         [ // Row 4:
+    //             new Button({ icon: "right_spin", ariaId: "7", onClick: () => basic.showNumber(7) }),
+    //             new Button({ icon: "right_turn", ariaId: "8", onClick: () => basic.showNumber(8) }),
+    //             new Button({ icon: "green_tick", ariaId: "9", onClick: () => basic.showNumber(9) })
+    //         ],
+    //     ],
+    //     isActive: true,
+    //     isHidden: false,
+    //     xScaling: 1.1,
+    //     yScaling: 1.9,
+    //     colour: 3,
+    // })
+
+    // const gcs = new GUIComponentScene({ app, components: [buttonCollection] })
+    // app.pushScene(gcs)
+
+
 
     // Example 4: Component context: Linking a graph with a button:
 
@@ -171,6 +209,26 @@ namespace microcode {
     // })
     // const gcs = new GUIComponentScene({ app, components: [txtBtnComp], colour: 3 })
     // app.pushScene(gcs)
-}
 
+
+
+    // Example 6: RadioButtons
+
+    const rbc = new RadioButtonCollection({
+        alignment: GUIComponentAlignment.TOP,
+        btns: [
+            new RadioButton({ text: "hi", onClick: () => { basic.showString("hi") } }),
+            new RadioButton({ text: "hiya", onClick: () => { basic.showString("hiya") } }),
+            new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } }),
+            new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } })
+        ],
+        isActive: true,
+        yScaling: 1.1,
+        // title: "The title",
+        colour: 3,
+    })
+
+    const gcs = new GUIComponentScene({ app, components: [rbc] })
+    app.pushScene(gcs)
+}
 
