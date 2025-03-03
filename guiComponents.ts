@@ -1239,8 +1239,6 @@ namespace microgui {
             this.title = (opts.title != null) ? opts.title : "";
             this.btns = (opts.btns != null) ? opts.btns : [];
 
-            const btnXOffset = (this.btns.length > 0) ? (this.bounds.width / (this.btns.length + 1)) : 0;
-
             const xBorder = this.bounds.width * 0.15;
             const yBorder = this.bounds.height * 0.05;
             const ySpacing = (this.bounds.height - yBorder) / (this.btns.length + 1);
@@ -1248,7 +1246,7 @@ namespace microgui {
             for (let i = 0; i < this.btns.length; i++) {
                 this.btns[i].setPosition(
                     xBorder + this.bounds.left + this.bounds.width, 
-                    (i + 1) * ySpacing
+                    ((i + 1) * ySpacing)
                 );
                 this.btns[i].setSelected(false)
             }
@@ -1451,24 +1449,25 @@ namespace microgui {
             if (opts.btns != null) {
                 this.btns = opts.btns;
 
-                const yBorder = this.bounds.height * 0.05
-                const xBorder = this.bounds.width * 0.05
-                const ySpacing: number = (this.bounds.height - yBorder) / (this.btns.length + 1);
+                const yBorder = this.bounds.height * 0.15
+                const xBorder = this.bounds.width * 0.15
+                const ySpacing: number = (this.bounds.height + yBorder) / (this.btns.length + 1);
 
                 // Adjust button x & y to be relative to this components window left & top:
                 for (let i = 0; i < this.btns.length; i++) {
                     const row = this.btns[i]
 
-                    const xSpacing: number = (this.bounds.width - xBorder) / (row.length + 1);
+                    const xSpacing: number = (this.bounds.width + xBorder) / (row.length + 1);
                     for (let j = 0; j < row.length; j++) {
                         const btn = row[j]
                         if (autoScaling && btn.xfrm.localPos.x == 0)
-                            btn.xfrm.localPos.x = ((j + 1) * xSpacing) - xBorder
+                            btn.xfrm.localPos.x = this.bounds.left + ((j + 1) * xSpacing) - (xBorder >> 1)
+                        else 
+                            btn.xfrm.localPos.x = this.bounds.left + btn.xfrm.localPos.x + (btn.width >> 1)
                         if (autoScaling && btn.xfrm.localPos.y == 0)
-                            btn.xfrm.localPos.y = ((i + 1) * ySpacing) - yBorder
-
-                        btn.xfrm.localPos.x = this.bounds.left + btn.xfrm.localPos.x + (btn.width >> 1)
-                        btn.xfrm.localPos.y = this.bounds.top + btn.xfrm.localPos.y + (btn.height >> 1)
+                            btn.xfrm.localPos.y = this.bounds.top + ((i + 1) * ySpacing) - (yBorder >> 1)
+                        else
+                            btn.xfrm.localPos.y = this.bounds.top + btn.xfrm.localPos.y + (btn.height >> 1)
                     }
                 };
 
@@ -1672,3 +1671,4 @@ namespace microgui {
         }
     }
 }
+

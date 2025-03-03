@@ -123,40 +123,42 @@ namespace microcode {
     // app.pushScene(gcs)
 
 
-    // const buttonCollection = new ButtonCollection({
-    //     alignment: GUIComponentAlignment.TOP,
-    //     btns: [
-    //         [ // Row 1:
-    //             new Button({ icon: "accelerometer", ariaId: "0", onClick: () => basic.showNumber(0) }),
-    //             new Button({ icon: "pin_0", ariaId: "1", onClick: () => basic.showNumber(1) }),
-    //             new Button({ icon: "pin_1", ariaId: "2", onClick: () => basic.showNumber(2) }),
-    //             new Button({ icon: "pin_2", ariaId: "3", onClick: () => basic.showNumber(3) }),
-    //         ],
-    //         [ // Row 2:
-    //             new Button({ icon: "thermometer", ariaId: "4", onClick: () => basic.showNumber(4) }),
-    //             new Button({ icon: "microphone", ariaId: "5", onClick: () => basic.showNumber(5) })
-    //         ],
-    //         [ // Row 3:
-    //             new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
-    //             new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
-    //             new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+    const buttonCollection = new ButtonCollection({
+        alignment: GUIComponentAlignment.TOP,
+        btns: [
+            [ // Row 1:
+                new Button({ icon: "accelerometer", ariaId: "0", onClick: () => basic.showNumber(0) }),
+                new Button({ icon: "pin_0", ariaId: "1", onClick: () => basic.showNumber(1) }),
+                new Button({ icon: "pin_1", ariaId: "2", onClick: () => basic.showNumber(2) }),
+                new Button({ icon: "pin_2", ariaId: "3", onClick: () => basic.showNumber(3) }),
+            ],
+            [ // Row 2:
+                new Button({ icon: "thermometer", ariaId: "4", onClick: () => basic.showNumber(4) }),
+                new Button({ icon: "microphone", ariaId: "5", onClick: () => basic.showNumber(5) })
+            ],
+            [ // Row 3:
+                new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+                new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+                new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+                new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
+                new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
                 
-    //         ],
-    //         [ // Row 4:
-    //             new Button({ icon: "right_spin", ariaId: "7", onClick: () => basic.showNumber(7) }),
-    //             new Button({ icon: "right_turn", ariaId: "8", onClick: () => basic.showNumber(8) }),
-    //             new Button({ icon: "green_tick", ariaId: "9", onClick: () => basic.showNumber(9) })
-    //         ],
-    //     ],
-    //     isActive: true,
-    //     isHidden: false,
-    //     xScaling: 1.1,
-    //     yScaling: 1.9,
-    //     colour: 3,
-    // })
+            ],
+            [ // Row 4:
+                new Button({ icon: "right_spin", ariaId: "7", onClick: () => basic.showNumber(7) }),
+                new Button({ icon: "right_turn", ariaId: "8", onClick: () => basic.showNumber(8) }),
+                new Button({ icon: "green_tick", ariaId: "9", onClick: () => basic.showNumber(9) })
+            ],
+        ],
+        isActive: true,
+        isHidden: false,
+        xScaling: 1.1,
+        yScaling: 1.7,
+        colour: 3,
+    })
 
-    // const gcs = new GUIComponentScene({ app, components: [buttonCollection] })
-    // app.pushScene(gcs)
+    const gcs = new GUIComponentScene({ app, components: [buttonCollection] })
+    app.pushScene(gcs)
 
 
 
@@ -214,21 +216,21 @@ namespace microcode {
 
     // Example 6: RadioButtons
 
-    const rbc = new RadioButtonCollection({
-        alignment: GUIComponentAlignment.TOP,
-        btns: [
-            new RadioButton({ text: "hi", onClick: () => { basic.showString("hi") } }),
-            new RadioButton({ text: "hiya", onClick: () => { basic.showString("hiya") } }),
-            new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } }),
-            new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } })
-        ],
-        isActive: true,
-        yScaling: 1.1,
-        // title: "The title",
-        colour: 3,
-    })
+    // const rbc = new RadioButtonCollection({
+    //     alignment: GUIComponentAlignment.TOP,
+    //     btns: [
+    //         new RadioButton({ text: "hi", onClick: () => { basic.showString("hi") } }),
+    //         new RadioButton({ text: "hiya", onClick: () => { basic.showString("hiya") } }),
+    //         new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } }),
+    //         new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } })
+    //     ],
+    //     isActive: true,
+    //     yScaling: 1.1,
+    //     // title: "The title",
+    //     colour: 3,
+    // })
 
-    const gcs = new GUIComponentScene({ app, components: [rbc] })
-    app.pushScene(gcs)
+    // const gcs = new GUIComponentScene({ app, components: [rbc] })
+    // app.pushScene(gcs)
 }
 
