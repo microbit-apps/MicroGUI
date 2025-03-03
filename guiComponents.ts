@@ -1157,6 +1157,162 @@ namespace microgui {
     }
 
 
+    export class RadioButton {
+        private text: string;
+        private textColour: number;
+        private x: number;
+        private y: number;
+        private onClick: (obj?: Object) => void;
+        private isSelected: boolean;
+
+        constructor(opts: { text: string, onClick: (obj: Object) => void, colour?: number}) {
+            this.text = opts.text;
+            this.x = null;
+            this.y = null;
+            this.onClick = opts.onClick;
+            this.isSelected = false;
+            this.textColour = (opts.colour == null) ? 15 : opts.colour;
+        }
+
+        public setSelected(isSelected: boolean) {
+            this.isSelected = isSelected;
+        }
+
+        public setPosition(x: number, y: number) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public click() {
+            this.onClick();
+        }
+
+        draw() {
+            screen().fillCircle(
+                this.x - 6,
+                this.y + 3,
+                4,
+                this.isSelected ? 6 : 1
+            )
+
+            screen().print(
+                this.text,
+                this.x,
+                this.y,
+                this.textColour
+            )
+        }
+    }
+
+
+    export class RadioButtonCollection extends GUIComponentAbstract {
+        private title: string;
+        private btns: RadioButton[]
+        private selectedTextBtnIndex: number;
+
+        constructor(opts: {
+            alignment: GUIComponentAlignment,
+            isActive: boolean,
+            btns: RadioButton[],
+            isHidden?: boolean,
+            xOffset?: number,
+            yOffset?: number,
+            xScaling?: number,
+            yScaling?: number,
+            colour?: number,
+            border?: boolean,
+            title?: string,
+            text?: string | string[]
+        }) {
+            super({
+                alignment: opts.alignment,
+                xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
+                yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
+                isActive: opts.isActive,
+                isHidden: opts.isHidden,
+                xScaling: opts.xScaling,
+                yScaling: opts.yScaling,
+                colour: opts.colour,
+                border: opts.border
+            });
+
+            this.title = (opts.title != null) ? opts.title : "";
+            this.btns = (opts.btns != null) ? opts.btns : [];
+
+            const titleYOffset = (this.title != "") ? 13 : 0;
+
+            const btnXOffset = (this.btns.length > 0) ? (this.bounds.width / (this.btns.length + 1)) : 0;
+
+            const xBorder = this.bounds.width * 0.08;
+            const yBorder = this.bounds.height * 0.05;
+            const ySpacing = (this.bounds.height - yBorder) / (this.btns.length + 1);
+
+            for (let i = 0; i < this.btns.length; i++) {
+                this.btns[i].setPosition(
+                    xBorder + this.bounds.left + this.bounds.width, 
+                    titleYOffset + ((i + 1) * ySpacing)
+                );
+                this.btns[i].setSelected(false)
+            }
+
+            if (this.btns) {
+                this.selectedTextBtnIndex = 0
+                this.btns[this.selectedTextBtnIndex].setSelected(true)
+            }
+        }
+
+        public makeActive() {
+            super.makeActive();
+            this.setupButtonBindings();
+        }
+
+        setupButtonBindings() {
+            unbindShieldButtons();
+
+            control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => {
+                this.btns[this.selectedTextBtnIndex].click();
+            })
+
+            control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
+                this.btns[this.selectedTextBtnIndex].setSelected(false)
+
+                const len = this.btns.length
+                this.selectedTextBtnIndex = (((this.selectedTextBtnIndex - 1) % len) + len) % len
+
+                this.btns[this.selectedTextBtnIndex].setSelected(true)
+            })
+
+            control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => {
+                this.btns[this.selectedTextBtnIndex].setSelected(false)
+                this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.btns.length
+                this.btns[this.selectedTextBtnIndex].setSelected(true)
+            })
+
+            control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => {
+                this.selectedTextBtnIndex = 0;
+            })
+
+            control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => {
+                this.selectedTextBtnIndex = this.btns.length - 1;
+            })
+        }
+
+        draw() {
+            super.draw();
+
+            const titleOffset = (font.charWidth * this.title.length) >> 1;
+
+            screen().print(
+                this.title,
+                (screen().width >> 1) + this.bounds.left + (this.width >> 1) - titleOffset,
+                (screen().height >> 1) + this.bounds.top + 2,
+            )
+
+            this.btns.forEach(btn => btn.draw())
+        }
+    }
+
+
     /**
      * Holds other components,
      * One component is active at a time
@@ -1266,6 +1422,7 @@ namespace microgui {
             btns: Button[][],
             isActive: boolean,
             isHidden?: boolean,
+            noAutoScaling?: boolean,
             xOffset?: number,
             yOffset?: number,
             xScaling?: number,
@@ -1291,16 +1448,31 @@ namespace microgui {
             // This is checked before drawing.
             this.cursorBounds = null;
 
+            const autoScaling = (opts.noAutoScaling == null) ? true : !opts.noAutoScaling
+
             if (opts.btns != null) {
                 this.btns = opts.btns;
 
+                const yBorder = this.bounds.height * 0.05
+                const xBorder = this.bounds.width * 0.05
+                const ySpacing: number = (this.bounds.height - yBorder) / (this.btns.length + 1);
+
                 // Adjust button x & y to be relative to this components window left & top:
-                this.btns.forEach(row => {
-                    row.forEach(btn => {
-                        btn.xfrm.localPos.x = this.bounds.left + btn.xfrm.localPos.x + (btn.width >> 1) + 2
-                        btn.xfrm.localPos.y = this.bounds.top + btn.xfrm.localPos.y + (btn.height >> 1) + 2
-                    })
-                })
+                for (let i = 0; i < this.btns.length; i++) {
+                    const row = this.btns[i]
+
+                    const xSpacing: number = (this.bounds.width - xBorder) / (row.length + 1);
+                    for (let j = 0; j < row.length; j++) {
+                        const btn = row[j]
+                        if (autoScaling && btn.xfrm.localPos.x == 0)
+                            btn.xfrm.localPos.x = ((j + 1) * xSpacing) - xBorder
+                        if (autoScaling && btn.xfrm.localPos.y == 0)
+                            btn.xfrm.localPos.y = ((i + 1) * ySpacing) - yBorder
+
+                        btn.xfrm.localPos.x = this.bounds.left + btn.xfrm.localPos.x + (btn.width >> 1)
+                        btn.xfrm.localPos.y = this.bounds.top + btn.xfrm.localPos.y + (btn.height >> 1)
+                    }
+                };
 
                 this.isActive = opts.isActive
 
@@ -1502,4 +1674,3 @@ namespace microgui {
         }
     }
 }
-
