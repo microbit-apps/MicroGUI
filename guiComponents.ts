@@ -1346,30 +1346,50 @@ namespace microgui {
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => {
                 this.btns[this.selectedTextBtnIndex].click();
-            })
+            });
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
-                this.btns[this.selectedTextBtnIndex].setSelected(false)
+                let tick = true;
+                control.onEvent(
+                    ControllerButtonEvent.Released,
+                    controller.up.id,
+                    () => tick = false
+                )
 
-                const len = this.btns.length
-                this.selectedTextBtnIndex = (((this.selectedTextBtnIndex - 1) % len) + len) % len
+                // Control logic:
+                while (tick) {
+                    this.btns[this.selectedTextBtnIndex].setSelected(false);
+                    const len = this.btns.length
+                    this.selectedTextBtnIndex = (((this.selectedTextBtnIndex - 1) % len) + len) % len
 
-                this.btns[this.selectedTextBtnIndex].setSelected(true)
-            })
+                    this.btns[this.selectedTextBtnIndex].setSelected(true)
+                    basic.pause(100) // tick rate
+                }
+
+                // Reset binding
+                control.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { });
+            });
+
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => {
-                this.btns[this.selectedTextBtnIndex].setSelected(false)
-                this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.btns.length
-                this.btns[this.selectedTextBtnIndex].setSelected(true)
-            })
+                let tick = true;
+                control.onEvent(
+                    ControllerButtonEvent.Released,
+                    controller.down.id,
+                    () => tick = false
+                )
 
-            control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => {
-                this.selectedTextBtnIndex = 0;
-            })
+                // Control logic:
+                while (tick) {
+                    this.btns[this.selectedTextBtnIndex].setSelected(false)
+                    this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.btns.length
+                    this.btns[this.selectedTextBtnIndex].setSelected(true)
+                    basic.pause(100) // tick rate
+                }
 
-            control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => {
-                this.selectedTextBtnIndex = this.btns.length - 1;
-            })
+                // Reset binding
+                control.onEvent(ControllerButtonEvent.Released, controller.down.id, () => { });
+            });
         }
 
         draw() {
