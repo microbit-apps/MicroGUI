@@ -3,13 +3,6 @@ namespace microgui {
     import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
 
-    import BACK_BUTTON_ERROR_KIND = user_interface_base.BACK_BUTTON_ERROR_KIND
-    import FORWARD_BUTTON_ERROR_KIND = user_interface_base.FORWARD_BUTTON_ERROR_KIND
-    import INavigator = user_interface_base.INavigator
-
-    import Cursor = user_interface_base.Cursor
-    import CursorDir = user_interface_base.CursorDir
-    import Picker = user_interface_base.Picker
     import Bounds = user_interface_base.Bounds
     import Screen = user_interface_base.Screen
     import Button = user_interface_base.Button
@@ -233,7 +226,7 @@ namespace microgui {
          */
         public rescaleWidthTo(newWidth: number): void {
             if (this.bounds != null) {
-                this.xScaling = newWidth / this.unscaledWidth;
+                this.xScaling = newWidth / this.unscaledWidth
                 this.bounds.left = this.getLeftAndTop()[0];
                 this.bounds.top = this.getLeftAndTop()[1];
 
@@ -245,7 +238,6 @@ namespace microgui {
                 })
             }
         }
-
 
         /**
          * 
@@ -282,9 +274,10 @@ namespace microgui {
                     15
                 )
 
-                this.bounds.fillRect(this.backgroundColour);
+                this.bounds.fillRect(this.backgroundColour)
             }
         }
+
 
         public get width() { return this.unscaledWidth * this.xScaling }
         public get height() { return this.unscaledHeight * this.yScaling }
@@ -394,7 +387,6 @@ namespace microgui {
             })
         }
     }
-
 
     export class GUISlider extends TextBox {
         private maximum: number;
@@ -575,7 +567,6 @@ namespace microgui {
 
             this.bounds.fillRect(15)
 
-
             //-------------------------------
             // Load the buffer with new data:
             //-------------------------------
@@ -589,6 +580,8 @@ namespace microgui {
 
                 this.frameCounter = 0;
             }
+
+
             //----------------------------
             // Draw sensor lines & ticker:
             //----------------------------
@@ -693,161 +686,6 @@ namespace microgui {
             )
         }
     }
-
-
-    export class GUISceneAbstract extends GUIComponentAbstract {
-        navigator: INavigator
-        public cursor: Cursor
-        public picker: Picker
-
-        constructor(opts: {
-            alignment: GUIComponentAlignment,
-            navigator: INavigator,
-            isActive: boolean,
-            isHidden: boolean,
-            xOffset?: number,
-            yOffset?: number,
-            width: number,
-            height: number,
-            xScaling?: number,
-            yScaling?: number,
-            colour?: number
-        }) {
-            super({
-                alignment: opts.alignment,
-                isActive: opts.isActive,
-                isHidden: opts.isHidden,
-                xOffset: (opts.xOffset != null) ? opts.xOffset : 0,
-                yOffset: (opts.yOffset != null) ? opts.yOffset : 0,
-                xScaling: opts.xScaling,
-                yScaling: opts.yScaling,
-                colour: opts.colour
-            })
-
-            this.navigator = opts.navigator
-
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.right.id,
-                () => this.moveCursor(CursorDir.Right)
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.up.id,
-                () => this.moveCursor(CursorDir.Up)
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.down.id,
-                () => this.moveCursor(CursorDir.Down)
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.left.id,
-                () => this.moveCursor(CursorDir.Left)
-            )
-
-            // click
-            const click = () => this.cursor.click()
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.A.id,
-                click
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.A.id + keymap.PLAYER_OFFSET,
-                click
-            )
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
-                controller.B.id,
-                () => this.back()
-            )
-
-            // this.cursor = new Cursor()
-            // this.picker = new Picker(this.cursor)
-            // this.navigator = new RowNavigator()
-            // this.cursor.navigator = this.navigator
-        }
-
-        protected moveCursor(dir: CursorDir) {
-            try {
-                this.moveTo(this.cursor.move(dir))
-            } catch (e) {
-                if (dir === CursorDir.Up && e.kind === BACK_BUTTON_ERROR_KIND)
-                    this.back()
-                else if (
-                    dir === CursorDir.Down &&
-                    e.kind === FORWARD_BUTTON_ERROR_KIND
-                )
-                    return
-                else throw e
-            }
-        }
-
-        protected moveTo(target: Button) {
-            if (!target) return
-            this.cursor.moveTo(
-                target.xfrm.worldPos,
-                target.ariaId,
-                target.bounds
-            )
-        }
-
-        back() {
-            if (!this.cursor.cancel()) this.moveCursor(CursorDir.Back)
-        }
-
-        protected handleClick(x: number, y: number) {
-            const target = this.cursor.navigator.screenToButton(
-                x - Screen.HALF_WIDTH,
-                y - Screen.HALF_HEIGHT
-            )
-            if (target) {
-                this.moveTo(target)
-                target.click()
-            } else if (this.picker.visible) {
-                this.picker.hide()
-            }
-        }
-
-        protected handleMove(x: number, y: number) {
-            const btn = this.cursor.navigator.screenToButton(
-                x - Screen.HALF_WIDTH,
-                y - Screen.HALF_HEIGHT
-            )
-            if (btn) {
-                const w = btn.xfrm.worldPos
-                this.cursor.snapTo(w.x, w.y, btn.ariaId, btn.bounds)
-                btn.reportAria(true)
-            }
-        }
-
-        /* override */ shutdown() {
-            this.navigator.clear()
-        }
-
-        /* override */ activate() {
-            // super.activate()
-            const btn = this.navigator.initialCursor(0, 0)
-            if (btn) {
-                const w = btn.xfrm.worldPos
-                this.cursor.snapTo(w.x, w.y, btn.ariaId, btn.bounds)
-                btn.reportAria(true)
-            }
-        }
-
-        /* override */ update() {
-            this.cursor.update()
-        }
-
-        /* override */ draw() {
-            this.picker.draw()
-            this.cursor.draw()
-        }
-    }
-
 
     const KEYBOARD_FRAME_COUNTER_CURSOR_ON = 20;
     const KEYBOARD_FRAME_COUNTER_CURSOR_OFF = 40;
@@ -1147,36 +985,63 @@ namespace microgui {
                 }
             })
 
-            control.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => { })
-
             control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
-                this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
+                let tick = true;
+                control.onEvent(
+                    ControllerButtonEvent.Released,
+                    controller.up.id,
+                    () => tick = false
+                )
 
-                this.selectedTextBtnIndex = Math.max(this.selectedTextBtnIndex - 1, 0);
-                this.cursorBounds = new Bounds({
-                    top: this.textBtns[this.selectedTextBtnIndex].bounds.top - 1,
-                    left: this.textBtns[this.selectedTextBtnIndex].bounds.left,
-                    width: this.textBtns[this.selectedTextBtnIndex].bounds.width + 2,
-                    height: this.textBtns[this.selectedTextBtnIndex].bounds.height + 2,
-                })
-                this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
+                // Control logic:
+                while (tick) {
+                    this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
+
+                    const len = this.textBtns.length
+                    this.selectedTextBtnIndex = (((this.selectedTextBtnIndex - 1) % len) + len) % len
+
+                    this.cursorBounds = new Bounds({
+                        top: this.textBtns[this.selectedTextBtnIndex].bounds.top - 1,
+                        left: this.textBtns[this.selectedTextBtnIndex].bounds.left,
+                        width: this.textBtns[this.selectedTextBtnIndex].bounds.width + 2,
+                        height: this.textBtns[this.selectedTextBtnIndex].bounds.height + 2,
+                    })
+                    this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
+
+                    basic.pause(200) // tick rate
+                }
+
+                // Reset binding
+                control.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { });
             })
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => {
-                this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
+                let tick = true;
+                control.onEvent(
+                    ControllerButtonEvent.Released,
+                    controller.down.id,
+                    () => tick = false
+                )
 
-                this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.textBtns.length;
-                this.cursorBounds = new Bounds({
-                    top: this.textBtns[this.selectedTextBtnIndex].bounds.top - 1,
-                    left: this.textBtns[this.selectedTextBtnIndex].bounds.left,
-                    width: this.textBtns[this.selectedTextBtnIndex].bounds.width + 2,
-                    height: this.textBtns[this.selectedTextBtnIndex].bounds.height + 2,
-                })
-                this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
+                // Control logic:
+                while (tick) {
+                    this.textBtns[this.selectedTextBtnIndex].setShadowColour(15);
+
+                    this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.textBtns.length;
+                    this.cursorBounds = new Bounds({
+                        top: this.textBtns[this.selectedTextBtnIndex].bounds.top - 1,
+                        left: this.textBtns[this.selectedTextBtnIndex].bounds.left,
+                        width: this.textBtns[this.selectedTextBtnIndex].bounds.width + 2,
+                        height: this.textBtns[this.selectedTextBtnIndex].bounds.height + 2,
+                    })
+                    this.textBtns[this.selectedTextBtnIndex].setShadowColour(6);
+
+                    basic.pause(200) // tick rate
+                }
+
+                // Reset binding
+                control.onEvent(ControllerButtonEvent.Released, controller.down.id, () => { });
             })
-
-            control.onEvent(ControllerButtonEvent.Pressed, controller.left.id, () => { })
-            control.onEvent(ControllerButtonEvent.Pressed, controller.right.id, () => { })
         }
 
         draw() {
@@ -1247,13 +1112,13 @@ namespace microgui {
     }
 
 
-
     export class RadioButtonCollection extends GUIComponentAbstract {
         private title: string;
         private btns: RadioButton[]
         private selectedTextBtnIndex: number;
 
         private xBorder = 12
+        private minYBorder = 5;
         private static MINIMUM_BUTTON_Y_SPACING: number = 2;
 
         constructor(opts: {
@@ -1317,22 +1182,24 @@ namespace microgui {
                 RadioButtonCollection.MINIMUM_BUTTON_Y_SPACING;
 
             // AutoScaling height:
-            const maxComponentHeight = yBorder + (ySpacing * this.btns.length) - 3
-            if (this.bounds.height < maxComponentHeight)
-                this.rescaleHeightTo(maxComponentHeight)
+            const maxComponentHeight = yBorder + (ySpacing * this.btns.length) - 3;
+
+            if (this.bounds.height < maxComponentHeight) {
+                this.rescaleHeightTo(maxComponentHeight);
+            }
 
             // AutoScaling width:
             const titleWidth = (this.title.length + 1) * font.charWidth;
-            const btnTextWidthFn = (btn: RadioButton) =>
-                this.xBorder + ((btn.text.length + 1) * font.charWidth);
 
-            const maxComponentWidth = this.btns.reduce((acc, btn) => (
-                btnTextWidthFn(btn) > acc ? btnTextWidthFn(btn) : acc),
-                titleWidth
+            const btnTextWidthFn = (btn: RadioButton) =>
+                this.xBorder + ((btn.text.length + 1) * font.charWidth)
+
+            const maxComponentWidth = this.btns.reduce((acc, btn) =>
+                (btnTextWidthFn(btn) > acc ? btnTextWidthFn(btn) : acc), titleWidth
             );
 
             if (this.bounds.width < maxComponentWidth) {
-                this.rescaleWidthTo(maxComponentWidth)
+                this.rescaleWidthTo(maxComponentWidth);
             }
         }
 
@@ -1346,7 +1213,7 @@ namespace microgui {
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.A.id, () => {
                 this.btns[this.selectedTextBtnIndex].click();
-            });
+            })
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
                 let tick = true;
@@ -1363,13 +1230,12 @@ namespace microgui {
                     this.selectedTextBtnIndex = (((this.selectedTextBtnIndex - 1) % len) + len) % len
 
                     this.btns[this.selectedTextBtnIndex].setSelected(true)
-                    basic.pause(100) // tick rate
+                    basic.pause(200) // tick rate
                 }
 
                 // Reset binding
                 control.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { });
             });
-
 
             control.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => {
                 let tick = true;
@@ -1384,7 +1250,7 @@ namespace microgui {
                     this.btns[this.selectedTextBtnIndex].setSelected(false)
                     this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.btns.length
                     this.btns[this.selectedTextBtnIndex].setSelected(true)
-                    basic.pause(100) // tick rate
+                    basic.pause(200) // tick rate
                 }
 
                 // Reset binding
@@ -1603,26 +1469,29 @@ namespace microgui {
         bindShieldButtons() {
             control.onEvent(
                 ControllerButtonEvent.Pressed,
-                controller.right.id,
-                () => {
-                    if (this.cursorCol == this.numberOfCols[this.cursorRow])
-                        this.cursorCol = 0
-                    else
-                        this.cursorCol = (this.cursorCol + 1) % this.numberOfCols[this.cursorRow]
-                    this.updateCursor()
-                }
-            )
-
-            control.onEvent(
-                ControllerButtonEvent.Pressed,
                 controller.up.id,
                 () => {
-                    this.cursorRow = (((this.cursorRow - 1) % this.numberOfRows) + this.numberOfRows) % this.numberOfRows; // Non-negative modulo
+                    let tick = true;
+                    control.onEvent(
+                        ControllerButtonEvent.Released,
+                        controller.up.id,
+                        () => tick = false
+                    )
 
-                    // Row above might have less cols, adjust if neccessary:
-                    if (this.numberOfCols[this.cursorRow] <= this.cursorCol)
-                        this.cursorCol = this.numberOfCols[this.cursorRow] - 1
-                    this.updateCursor()
+                    // Control logic:
+                    while (tick) {
+                        this.cursorRow = (((this.cursorRow - 1) % this.numberOfRows) + this.numberOfRows) % this.numberOfRows; // Non-negative modulo
+
+                        // Row above might have less cols, adjust if neccessary:
+                        if (this.numberOfCols[this.cursorRow] <= this.cursorCol)
+                            this.cursorCol = this.numberOfCols[this.cursorRow] - 1
+                        this.updateCursor()
+
+                        basic.pause(200)
+                    }
+
+                    // Reset binding
+                    control.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { });
                 }
             )
 
@@ -1630,12 +1499,27 @@ namespace microgui {
                 ControllerButtonEvent.Pressed,
                 controller.down.id,
                 () => {
-                    this.cursorRow = (this.cursorRow + 1) % this.numberOfRows;
+                    let tick = true;
+                    control.onEvent(
+                        ControllerButtonEvent.Released,
+                        controller.down.id,
+                        () => tick = false
+                    )
 
-                    // Row below might have less cols, adjust if neccessary:
-                    if (this.numberOfCols[this.cursorRow] <= this.cursorCol)
-                        this.cursorCol = this.numberOfCols[this.cursorRow] - 1
-                    this.updateCursor()
+                    // Control logic:
+                    while (tick) {
+                        this.cursorRow = (this.cursorRow + 1) % this.numberOfRows;
+
+                        // Row below might have less cols, adjust if neccessary:
+                        if (this.numberOfCols[this.cursorRow] <= this.cursorCol)
+                            this.cursorCol = this.numberOfCols[this.cursorRow] - 1
+                        this.updateCursor()
+
+                        basic.pause(200)
+                    }
+
+                    // Reset binding
+                    control.onEvent(ControllerButtonEvent.Released, controller.down.id, () => { });
                 }
             )
 
@@ -1643,11 +1527,53 @@ namespace microgui {
                 ControllerButtonEvent.Pressed,
                 controller.left.id,
                 () => {
-                    if (this.cursorCol == 0)
-                        this.cursorCol = this.numberOfCols[this.cursorRow] - 1
-                    else
-                        this.cursorCol -= 1
-                    this.updateCursor()
+                    let tick = true;
+                    control.onEvent(
+                        ControllerButtonEvent.Released,
+                        controller.left.id,
+                        () => tick = false
+                    )
+
+                    // Control logic:
+                    while (tick) {
+                        if (this.cursorCol == 0)
+                            this.cursorCol = this.numberOfCols[this.cursorRow] - 1
+                        else
+                            this.cursorCol -= 1
+                        this.updateCursor()
+
+                        basic.pause(200) // tick rate
+                    }
+
+                    // Reset binding
+                    control.onEvent(ControllerButtonEvent.Released, controller.left.id, () => { });
+                }
+            )
+
+            control.onEvent(
+                ControllerButtonEvent.Pressed,
+                controller.right.id,
+                () => {
+                    let tick = true;
+                    control.onEvent(
+                        ControllerButtonEvent.Released,
+                        controller.right.id,
+                        () => tick = false
+                    )
+
+                    // Control logic:
+                    while (tick) {
+                        if (this.cursorCol == this.numberOfCols[this.cursorRow])
+                            this.cursorCol = 0
+                        else
+                            this.cursorCol = (this.cursorCol + 1) % this.numberOfCols[this.cursorRow]
+                        this.updateCursor()
+
+                        basic.pause(200) // tick rate
+                    }
+
+                    // Reset binding
+                    control.onEvent(ControllerButtonEvent.Released, controller.right.id, () => { });
                 }
             )
 
@@ -1743,6 +1669,7 @@ namespace microgui {
         }
     }
 
+
     export class KeyboardComponent extends ButtonCollection {
         constructor(opts: {
             alignment: GUIComponentAlignment,
@@ -1769,3 +1696,5 @@ namespace microgui {
         }
     }
 }
+
+
