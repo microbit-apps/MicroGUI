@@ -1,12 +1,11 @@
-
-
 namespace microcode {
-    import App = microgui.App
     import Scene = user_interface_base.Scene
     import SceneManager = user_interface_base.SceneManager
     import Screen = user_interface_base.Screen
-    import KeyboardMenu = microgui.KeyboardMenu
     import Button = user_interface_base.Button
+
+    import App = microgui.App
+    import KeyboardMenu = microgui.KeyboardMenu
     import ButtonCollection = microgui.ButtonCollection
     import GUIComponentAlignment = microgui.GUIComponentAlignment
     import TextBox = microgui.TextBox
@@ -18,9 +17,9 @@ namespace microcode {
     import RadioButtonCollection = microgui.RadioButtonCollection
     import RadioButton = microgui.RadioButton
 
+
     control.singleSimulator();
     const app = new App();
-
 
     // Comment out the examples you aren't using:
 
@@ -142,7 +141,7 @@ namespace microcode {
                 new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
                 new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
                 new Button({ icon: "compass", ariaId: "6", onClick: () => basic.showNumber(6) }),
-                
+
             ],
             [ // Row 4:
                 new Button({ icon: "right_spin", ariaId: "7", onClick: () => basic.showNumber(7) }),
@@ -217,16 +216,16 @@ namespace microcode {
     // Example 6: RadioButtons
 
     // const rbc = new RadioButtonCollection({
-    //     alignment: GUIComponentAlignment.TOP,
+    //     alignment: GUIComponentAlignment.BOT,
     //     btns: [
-    //         new RadioButton({ text: "hi", onClick: () => { basic.showString("hi") } }),
-    //         new RadioButton({ text: "hiya", onClick: () => { basic.showString("hiya") } }),
-    //         new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } }),
-    //         new RadioButton({ text: "hello", onClick: () => { basic.showString("hello") } })
+    //         new RadioButton({ text: "hi", onClick: () => { basic.showString("a") } }),
+    //         new RadioButton({ text: "hiya", onClick: () => { basic.showString("b") } }),
+    //         new RadioButton({ text: "hello", onClick: () => { basic.showString("c") } }),
+    //         new RadioButton({ text: "howdy", onClick: () => { basic.showString("d") } })
     //     ],
     //     isActive: true,
     //     yScaling: 1.1,
-    //     // title: "The title",
+    //     title: "The title",
     //     colour: 3,
     // })
 

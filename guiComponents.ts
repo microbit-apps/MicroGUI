@@ -1165,7 +1165,7 @@ namespace microgui {
         private onClick: (obj?: Object) => void;
         private isSelected: boolean;
 
-        constructor(opts: { text: string, onClick: (obj: Object) => void, colour?: number}) {
+        constructor(opts: { text: string, onClick: (obj: Object) => void, colour?: number }) {
             this.text = opts.text;
             this.x = null;
             this.y = null;
@@ -1245,8 +1245,8 @@ namespace microgui {
 
             for (let i = 0; i < this.btns.length; i++) {
                 this.btns[i].setPosition(
-                    xBorder + this.bounds.left + this.bounds.width, 
-                    ((i + 1) * ySpacing)
+                    xBorder + this.bounds.left + this.bounds.width,
+                    this.bounds.top + this.bounds.height + ((i + 1) * ySpacing) - 3
                 );
                 this.btns[i].setSelected(false)
             }
@@ -1462,7 +1462,7 @@ namespace microgui {
                         const btn = row[j]
                         if (autoScaling && btn.xfrm.localPos.x == 0)
                             btn.xfrm.localPos.x = this.bounds.left + ((j + 1) * xSpacing) - (xBorder >> 1)
-                        else 
+                        else
                             btn.xfrm.localPos.x = this.bounds.left + btn.xfrm.localPos.x + (btn.width >> 1)
                         if (autoScaling && btn.xfrm.localPos.y == 0)
                             btn.xfrm.localPos.y = this.bounds.top + ((i + 1) * ySpacing) - (yBorder >> 1)
