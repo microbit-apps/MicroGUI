@@ -10,7 +10,6 @@ namespace microgui {
     import Cursor = user_interface_base.Cursor
     import CursorDir = user_interface_base.CursorDir
     import Picker = user_interface_base.Picker
-
     import Bounds = user_interface_base.Bounds
     import Screen = user_interface_base.Screen
     import Button = user_interface_base.Button
@@ -228,6 +227,49 @@ namespace microgui {
 
 
         /**
+         * 
+         * @param xScaling 1.0 is default; affects this.bounds.width: width = (this.xScaling * this.unscaledWidth) 
+         * @param yScaling 1.0 is default; affects this.bounds.height: height = (this.yScaling * this.unscaledHeight) 
+         */
+        public rescaleWidthTo(newWidth: number): void {
+            if (this.bounds != null) {
+                this.xScaling = newWidth / this.unscaledWidth;
+                this.bounds.left = this.getLeftAndTop()[0];
+                this.bounds.top = this.getLeftAndTop()[1];
+
+                this.bounds = new Bounds({
+                    width: this.unscaledWidth * this.xScaling,
+                    height: this.unscaledHeight * this.yScaling,
+                    left: this.bounds.left,
+                    top: this.bounds.top
+                })
+            }
+        }
+
+
+        /**
+         * 
+         * @param xScaling 1.0 is default; affects this.bounds.width: width = (this.xScaling * this.unscaledWidth) 
+         * @param yScaling 1.0 is default; affects this.bounds.height: height = (this.yScaling * this.unscaledHeight) 
+         */
+        public rescaleHeightTo(newHeight: number): void {
+            if (this.bounds != null) {
+                this.yScaling = newHeight / this.unscaledHeight
+
+                this.bounds.left = this.getLeftAndTop()[0];
+                this.bounds.top = this.getLeftAndTop()[1];
+
+                this.bounds = new Bounds({
+                    width: this.unscaledWidth * this.xScaling,
+                    height: this.unscaledHeight * this.yScaling,
+                    left: this.bounds.left,
+                    top: this.bounds.top
+                })
+            }
+        }
+
+
+        /**
          * Invoked by parent, see Window.
          */
         public draw(): void {
@@ -240,10 +282,9 @@ namespace microgui {
                     15
                 )
 
-                this.bounds.fillRect(this.backgroundColour)
+                this.bounds.fillRect(this.backgroundColour);
             }
         }
-
 
         public get width() { return this.unscaledWidth * this.xScaling }
         public get height() { return this.unscaledHeight * this.yScaling }
@@ -353,6 +394,7 @@ namespace microgui {
             })
         }
     }
+
 
     export class GUISlider extends TextBox {
         private maximum: number;
@@ -1158,7 +1200,7 @@ namespace microgui {
 
 
     export class RadioButton {
-        private text: string;
+        public text: string;
         private textColour: number;
         private x: number;
         private y: number;
@@ -1205,10 +1247,14 @@ namespace microgui {
     }
 
 
+
     export class RadioButtonCollection extends GUIComponentAbstract {
         private title: string;
         private btns: RadioButton[]
         private selectedTextBtnIndex: number;
+
+        private xBorder = 12
+        private static MINIMUM_BUTTON_Y_SPACING: number = 2;
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
@@ -1239,21 +1285,54 @@ namespace microgui {
             this.title = (opts.title != null) ? opts.title : "";
             this.btns = (opts.btns != null) ? opts.btns : [];
 
-            const xBorder = this.bounds.width * 0.15;
-            const yBorder = this.bounds.height * 0.05;
+            const originalWidth = this.bounds.width
+            const originalHeight = this.bounds.height
+            this.autoScale()
+
+            const yBorder = this.bounds.height * 0.10
             const ySpacing = (this.bounds.height - yBorder) / (this.btns.length + 1);
 
             for (let i = 0; i < this.btns.length; i++) {
                 this.btns[i].setPosition(
-                    xBorder + this.bounds.left + this.bounds.width,
-                    this.bounds.top + this.bounds.height + ((i + 1) * ySpacing) - 3
+                    this.xBorder + this.bounds.left + originalWidth,
+                    yBorder + this.bounds.top + originalHeight + ((i + 1) * ySpacing) - 3
                 );
                 this.btns[i].setSelected(false)
             }
 
             if (this.btns.length > 0) {
+                // Choose the current active button:
                 this.selectedTextBtnIndex = 0
                 this.btns[this.selectedTextBtnIndex].setSelected(true)
+            };
+
+            super.makeActive();
+            this.setupButtonBindings();
+        }
+
+        private autoScale() {
+            const yBorder = 0;
+            const ySpacing =
+                font.charHeight *
+                RadioButtonCollection.MINIMUM_BUTTON_Y_SPACING;
+
+            // AutoScaling height:
+            const maxComponentHeight = yBorder + (ySpacing * this.btns.length) - 3
+            if (this.bounds.height < maxComponentHeight)
+                this.rescaleHeightTo(maxComponentHeight)
+
+            // AutoScaling width:
+            const titleWidth = (this.title.length + 1) * font.charWidth;
+            const btnTextWidthFn = (btn: RadioButton) =>
+                this.xBorder + ((btn.text.length + 1) * font.charWidth);
+
+            const maxComponentWidth = this.btns.reduce((acc, btn) => (
+                btnTextWidthFn(btn) > acc ? btnTextWidthFn(btn) : acc),
+                titleWidth
+            );
+
+            if (this.bounds.width < maxComponentWidth) {
+                this.rescaleWidthTo(maxComponentWidth)
             }
         }
 
@@ -1302,7 +1381,7 @@ namespace microgui {
                 this.title,
                 (screen().width >> 1) + this.bounds.left + (this.width >> 1) - titleOffset,
                 (screen().height >> 1) + this.bounds.top + 2,
-            )
+            );
 
             this.btns.forEach(btn => btn.draw())
         }
@@ -1644,7 +1723,6 @@ namespace microgui {
         }
     }
 
-
     export class KeyboardComponent extends ButtonCollection {
         constructor(opts: {
             alignment: GUIComponentAlignment,
@@ -1671,4 +1749,3 @@ namespace microgui {
         }
     }
 }
-

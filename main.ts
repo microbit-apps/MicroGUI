@@ -216,20 +216,20 @@ namespace microcode {
     // Example 6: RadioButtons
 
     // const rbc = new RadioButtonCollection({
-    //     alignment: GUIComponentAlignment.BOT,
+    //     alignment: GUIComponentAlignment.CENTRE,
     //     btns: [
     //         new RadioButton({ text: "hi", onClick: () => { basic.showString("a") } }),
-    //         new RadioButton({ text: "hiya", onClick: () => { basic.showString("b") } }),
+    //         new RadioButton({ text: "hiyaaaaaaaaaa", onClick: () => { basic.showString("b") } }),
     //         new RadioButton({ text: "hello", onClick: () => { basic.showString("c") } }),
-    //         new RadioButton({ text: "howdy", onClick: () => { basic.showString("d") } })
+    //         new RadioButton({ text: "a", onClick: () => { basic.showString("d") } }),
+    //         new RadioButton({ text: "b", onClick: () => { basic.showString("e") } })
     //     ],
     //     isActive: true,
-    //     yScaling: 1.1,
     //     title: "The title",
-    //     colour: 3,
-    // })
+    //     colour: 3
+    // });
 
-    // const gcs = new GUIComponentScene({ app, components: [rbc] })
-    // app.pushScene(gcs)
+    // const gcs = new GUIComponentScene({ app, components: [rbc] });
+    // app.pushScene(gcs);
 }
 
