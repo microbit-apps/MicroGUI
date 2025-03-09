@@ -312,6 +312,9 @@ namespace microgui {
     /**
      * Component that contains a Title + a chunk of text.
      */
+
+
+    //% block="Text Box" weight=50, color=#F0A500
     export class TextBox extends GUIComponentAbstract {
         private title: string;
         private maxCharactersPerLine: number;
@@ -391,6 +394,7 @@ namespace microgui {
         }
     }
 
+    //% block="Slider" weight=50, color=#F01000
     export class GUISlider extends TextBox {
         private maximum: number;
         private minimum: number;
@@ -519,6 +523,7 @@ namespace microgui {
         }
     }
 
+    //% block="Graph" weight=50, color=#44c900
     export class GUIGraph extends TextBox {
         private graphableFns: GraphableFunction[]
         /** Reads the graphableFns if the frameCounter is >= this sampling rate. */
@@ -842,6 +847,7 @@ namespace microgui {
     // }
 
 
+    //% block="Text Button" weight=50, color=#007777
     export class TextButton {
         public bounds: Bounds;
         private shadowBounds: Bounds;
@@ -916,6 +922,7 @@ namespace microgui {
     }
 
 
+    //% block="Text Button Collection" weight=50, color=#F077B3
     export class TextButtonCollection extends GUIComponentAbstract {
         private title: string;
         private textBtns: TextButton[];
@@ -1067,6 +1074,7 @@ namespace microgui {
     }
 
 
+    //% block="Radio Button" weight=50, color=#28edB3
     export class RadioButton {
         public text: string;
         private textColour: number;
@@ -1115,6 +1123,7 @@ namespace microgui {
     }
 
 
+    //% block="Radio Button Collection" weight=50, color=#F6FAB4
     export class RadioButtonCollection extends GUIComponentAbstract {
         private title: string;
         private btns: RadioButton[]
@@ -1281,6 +1290,8 @@ namespace microgui {
      * Holds other components,
      * One component is active at a time
      */
+
+    //% block="Component Scene" weight=50, color=#40BF24
     export class GUIComponentScene extends Scene {
         private components: GUIComponentAbstract[];
         private currentComponentID: number;
@@ -1371,6 +1382,7 @@ namespace microgui {
         }
     }
 
+    //% block="Button Collection" weight=50, color=#F5F575
     export class ButtonCollection extends GUIComponentAbstract {
         private btns: Button[][];
         private numberOfRows: number;
