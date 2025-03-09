@@ -1,4 +1,5 @@
 
+
 //% block="MicroGUI" weight=100, color=#000A83
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
@@ -870,7 +871,8 @@ namespace microgui {
     // }
 
 
-    //% block="Create a text button | with text $text on click $callback || at x $x at y $y with colour $colour with text colour $textColour"
+    //% block="Create a text button | with text $text on click $callback event || at x $x at y $y with colour $colour with text colour $textColour"
+    //% draggableParameters
     //% blockSetVariable=textBtn
     export function createTextBtn(
         text: string,
@@ -1796,5 +1798,6 @@ namespace microgui {
         }
     }
 }
+
 
 
