@@ -31,16 +31,25 @@ namespace microgui {
      * See getLeftAndTop in GUIComponentAbstract for how this is calculated.
      */
 
-    //% block="Alignment" weight=100, color=#FF5733
+    //% emitAsConstant color=#FF5733
     export const enum GUIComponentAlignment {
+        //% block="TOP"
         TOP,
+        //% block="LEFT"
         LEFT,
+        //% block="RIGHT"
         RIGHT,
+        //% block="BOT"
         BOT,
+        //% block="CENTRE"
         CENTRE,
+        //% block="TOP RIGHT"
         TOP_RIGHT,
+        //% block="TOP LEFT"
         TOP_LEFT,
+        //% block="BOT RIGHT"
         BOT_RIGHT,
+        //% block="BOT LEFT"
         BOT_LEFT
     }
 
@@ -309,12 +318,26 @@ namespace microgui {
     }
 
 
+    //% block = "createTextBox" weight=50
+    //% blockSetVariable=textBox
+    export function createTextBox(isActive: boolean): TextBox {
+        return new TextBox({
+            alignment: GUIComponentAlignment.CENTRE,
+            isActive,
+            title: "Title",
+            text: "Text",
+            xScaling: 1.0,
+            yScaling: 1.0,
+            colour: 3,
+            border: true,
+            showBackground: true
+        })
+    }
+
     /**
      * Component that contains a Title + a chunk of text.
      */
-
-
-    //% block="Text Box" weight=50, color=#F0A500
+    //% autoCreate=microgui.createTextBox color=#5F7FF0
     export class TextBox extends GUIComponentAbstract {
         private title: string;
         private maxCharactersPerLine: number;
@@ -847,7 +870,27 @@ namespace microgui {
     // }
 
 
-    //% block="Text Button" weight=50, color=#007777
+    //% block="Create a text button | with text $text on click $callback || at x $x at y $y with colour $colour with text colour $textColour"
+    //% blockSetVariable=textBtn
+    export function createTextBtn(
+        text: string,
+        callback: () => void,
+        x?: number,
+        y?: number,
+        colour?: number,
+        textColour?: number
+    ): TextButton {
+        return new TextButton({
+            text,
+            callback,
+            x,
+            y,
+            colour,
+            textColour
+        });
+    }
+
+    //% color=#007777
     export class TextButton {
         public bounds: Bounds;
         private shadowBounds: Bounds;
@@ -863,7 +906,7 @@ namespace microgui {
             text: string,
             callback: () => void,
             x?: number,
-            y?: number
+            y?: number,
             colour?: number,
             textColour?: number
         }) {
@@ -922,7 +965,39 @@ namespace microgui {
     }
 
 
-    //% block="Text Button Collection" weight=50, color=#F077B3
+    //% block="Create a text button collection | with alignment $alignment is active $isActive with buttons $textBtns || is hidden $isHidden with x offset $xOffset with y offset $yOffset with xScaling $xScaling with yScaling $yScaling with colour $colour has a border $border with title $title with text $text shows the background $showBackground"
+    //% textBtns.defl = "createTextBtn"
+    //% blockSetVariable=textBtnCollection
+    export function createTextBtnCollection(
+        alignment: GUIComponentAlignment,
+        isActive: boolean,
+        textBtns: TextButton[],
+        isHidden?: boolean,
+        xOffset?: number,
+        yOffset?: number,
+        xScaling?: number,
+        yScaling?: number,
+        colour?: number,
+        border?: boolean,
+        title?: string,
+        text?: string[]
+    ): TextButtonCollection {
+        return new TextButtonCollection({
+            alignment,
+            isActive,
+            textBtns,
+            isHidden,
+            xOffset,
+            yOffset,
+            xScaling,
+            yScaling,
+            colour,
+            border,
+            title,
+            text
+        });
+    }
+
     export class TextButtonCollection extends GUIComponentAbstract {
         private title: string;
         private textBtns: TextButton[];
@@ -1072,8 +1147,6 @@ namespace microgui {
             }
         }
     }
-
-
     //% block="Radio Button" weight=50, color=#28edB3
     export class RadioButton {
         public text: string;
@@ -1286,12 +1359,27 @@ namespace microgui {
     }
 
 
+
+    //% block="Create a component scene | on app $app with background colour $colour with components $components"
+    //% textBtns.defl = ""
+    //% blockSetVariable=componentScene
+    export function createComponentScene(
+        app: AppInterface,
+        colour?: number,
+        components?: GUIComponentAbstract[]
+    ): GUIComponentScene {
+        return new GUIComponentScene({
+            app,
+            colour,
+            components
+        });
+    }
+
     /**
      * Holds other components,
      * One component is active at a time
      */
-
-    //% block="Component Scene" weight=50, color=#40BF24
+    //% color=#40BF24
     export class GUIComponentScene extends Scene {
         private components: GUIComponentAbstract[];
         private currentComponentID: number;
@@ -1299,8 +1387,6 @@ namespace microgui {
         constructor(opts: {
             app: AppInterface,
             colour?: number,
-            next?: (arg0: any[]) => void,
-            back?: (arg0: any[]) => void,
             components?: GUIComponentAbstract[]
         }) {
             super(opts.app)
@@ -1381,7 +1467,6 @@ namespace microgui {
             this.components[this.currentComponentID].draw()
         }
     }
-
     //% block="Button Collection" weight=50, color=#F5F575
     export class ButtonCollection extends GUIComponentAbstract {
         private btns: Button[][];
