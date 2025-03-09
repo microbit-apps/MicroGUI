@@ -1,4 +1,5 @@
 
+//% block="MicroGUI" weight=100, color=#000A83
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
@@ -29,6 +30,8 @@ namespace microgui {
      * This Bounds object is the extent of the component.
      * See getLeftAndTop in GUIComponentAbstract for how this is calculated.
      */
+
+    //% block="Alignment" weight=100, color=#FF5733
     export const enum GUIComponentAlignment {
         TOP,
         LEFT,
