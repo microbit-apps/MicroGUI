@@ -1,3 +1,4 @@
+
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
@@ -183,28 +184,29 @@ namespace microgui {
 
     export class KeyboardMenu extends CursorSceneWithPriorPage {
         private static WIDTHS: number[] = [10, 10, 10, 10, 4]
-        private btns: Button[]
-        private btnText: string[]
+        private btns: Button[][]
+        private btnsText: string[][]
         private text: string;
-        private upperCase: boolean;
+        private isUpperCase: boolean;
         private next: (arg0: string) => void
         private frameCounter: number;
         private shakeText: boolean
         private shakeTextCounter: number
 
         constructor(app: AppInterface, next: (arg0: string) => void) {
-            super(app, function() { }, new GridNavigator())//, 5, 5, KeyboardMenu.WIDTHS, new GridNavigator(5, 10))
+            super(app, function() { }, new GridNavigator())
             this.text = ""
-            this.upperCase = true
-
-            this.btns = []
-            this.btnText = [
-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-                "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
-                "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
-                "U", "V", "W", "X", "Y", "Z", ",", ".", "?", "!",
-                "<-", "^", " _______ ", "ENTER"
+            this.isUpperCase = true
+            
+            this.btnsText = [
+                ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+                ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
+                ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
+                ["<-", "^", " _______ ", "ENTER"]
             ];
+
+            this.btns = this.btnsText.map((row: string[]) => [])
 
             this.next = next
             this.frameCounter = 0;
@@ -217,7 +219,7 @@ namespace microgui {
 
             const defaultBehaviour = (btn: Button) => {
                 if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
-                    this.text += this.btnText[btn.state[0]]
+                    this.text += this.btnsText[btn.state[0]][btn.state[1]]
                     this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
                 }
                 else {
@@ -225,10 +227,10 @@ namespace microgui {
                 }
             }
 
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < this.btns.length; i++) {
                 const xDiff = screen().width / (KeyboardMenu.WIDTHS[i] + 1);
-                for (let j = 0; j < 10; j++) {
-                    this.btns.push(
+                for (let j = 0; j < this.btnsText[i].length; j++) {
+                    this.btns[i][j] = 
                         new Button({
                             parent: null,
                             style: ButtonStyles.Transparent,
@@ -237,9 +239,8 @@ namespace microgui {
                             x: (xDiff * (j + 1)) - (screen().width / 2),
                             y: (13 * (i + 1)) - 18,
                             onClick: defaultBehaviour,
-                            state: [(i * 10) + j]
+                            state: [i, j] // Coords of the button; used to lookup this.btnsText
                         })
-                    )
                 }
             }
 
@@ -250,8 +251,8 @@ namespace microgui {
                             ? this.text.substr(0, this.text.length - 1)
                             : this.text
                     this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
-                },
-                (btn: Button) => { this.changeCase() },
+                }, // BACKSPACE
+                (btn: Button) => { this.changeCase() }, // CHANGE CASE
                 (btn: Button) => {
                     if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
                         this.text += " ";
@@ -260,41 +261,46 @@ namespace microgui {
                     else {
                         this.shakeText = true
                     }
-                },
-                (btn: Button) => { this.next(this.text) }
+                }, // SPACEBAR
+                (btn: Button) => { this.next(this.text) } // ENTER
             ]
 
             const icons = [bitmaps.create(16, 10), bitmaps.create(10, 10), bitmaps.create(55, 10), bitmaps.create(33, 10)]
             const x = [22, 38, 74, 124]
-            for (let i = 0; i < 4; i++) {
-                this.btns.push(
+
+            const specialBtnRow = this.btns.length - 1;
+            for (let j = 0; j < this.btns[specialBtnRow].length; j++) {
+                this.btns[specialBtnRow][j] = 
                     new Button({
                         parent: null,
                         style: ButtonStyles.Transparent,
-                        icon: icons[i],
+                        icon: icons[j],
                         ariaId: "",
-                        x: x[i] - (screen().width / 2),
+                        x: x[j] - (screen().width / 2),
                         y: (13 * 5) - 18,
-                        onClick: botRowBehaviours[i]
+                        onClick: botRowBehaviours[j]
                     })
-                )
             }
 
             this.changeCase()
-            this.navigator.setBtns([this.btns])
+            this.navigator.setBtns(this.btns)
         }
 
-        private changeCase() {
-            this.upperCase = !this.upperCase;
 
-            if (this.upperCase)
-                this.btnText = this.btnText.map((btn, i) =>
-                    btn = (i < 40) ? btn.toUpperCase() : btn
-                )
-            else
-                this.btnText = this.btnText.map((btn, i) =>
-                    btn = (i < 40) ? btn.toLowerCase() : btn
-                )
+        private changeCase() {
+            this.isUpperCase = !this.isUpperCase;
+
+            const toUpperCase = (btnText: string) => { return btnText.toUpperCase(); }
+            const toLowerCase = (btnText: string) => { return btnText.toLowerCase(); }
+            const swapCase = (this.isUpperCase) ? toUpperCase : toLowerCase;
+
+            // Don't do special char row:
+            for (let i = 0; i < this.btns.length - 1; i++) {
+                for (let j = 0; j < this.btns[i].length; j++) {
+                    const btnText = this.btnsText[i][j]
+                    this.btnsText[i][j] = (j < 40) ? swapCase(btnText) : btnText
+                }
+            }
         }
 
         draw() {
@@ -399,11 +405,16 @@ namespace microgui {
             )
 
             for (let i = 0; i < this.btns.length; i++) {
-                this.btns[i].draw()
+                for (let j = 0; j < this.btns[i].length; j++) {
+                    const btn = this.btns[i][j];
+                    const btnText = this.btnsText[i][j];
 
-                const x = (screen().width / 2) + this.btns[i].xfrm.localPos.x - (this.btns[i].icon.width / 2) + 2
-                const y = (screen().height / 2) + this.btns[i].xfrm.localPos.y + font.charHeight - 12
-                screen().print(this.btnText[i], x, y, 1) // White text
+                    const x = (screen().width / 2) + btn.xfrm.localPos.x - (btn.icon.width / 2) + 2
+                    const y = (screen().height / 2) + btn.xfrm.localPos.y + font.charHeight - 12
+
+                    btn.draw()
+                    screen().print(btnText, x, y, 1) // White text
+                }
             }
 
             super.draw()
@@ -707,3 +718,4 @@ namespace microgui {
         }
     }
 }
+
