@@ -1798,6 +1798,3 @@ namespace microgui {
         }
     }
 }
-
-
-
