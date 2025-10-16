@@ -1,4 +1,3 @@
-
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
@@ -207,8 +206,8 @@ namespace microgui {
                 ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
                 ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
                 ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
-                    ["<-",    "^",    " _______ ",    "ENTER"]
-            ], 
+                ["<-", "^", " _______ ", "ENTER"]
+            ],
             defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => {
                 kb.appendText(btn.state[0])
             },
@@ -217,6 +216,25 @@ namespace microgui {
                 { btnRow: 4, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.swapCase() }, // Change case
                 { btnRow: 4, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => kb.appendText(" ") }, // Spacebar
                 { btnRow: 4, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.nextScene() } // ENTER
+            ]
+        },
+        [KeyboardLayouts.NUMERIC]: {
+            btnTexts: [
+                ["0", "1", "2", "3", "4"],
+                ["5", "6", "7", "8", "9"],
+                ["<-", "+", ".", "ENTER"]
+            ],
+            defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => {
+                kb.appendText(btn.state[0])
+            },
+            specialBtnBehaviours: [
+                { btnRow: 2, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
+                { btnRow: 2, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.swapCase() }, // Change case
+                { btnRow: 2, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => kb.appendText(".") }, // Spacebar
+                { btnRow: 2, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => {
+                    
+                    kb.nextScene()
+                }} // ENTER
             ]
         }
     };
@@ -254,16 +272,18 @@ namespace microgui {
         startup(controlSetupFn: () => void) {
             super.startup(controlSetupFn)
 
-            const data = __keyboardLayout[KeyboardLayouts.QWERTY];
-            this.btns = data.btnTexts.map(_ => [])
+            const data = __keyboardLayout[this.keyboardLayout];
+            this.btns = data.btnTexts.map(_ => []);
 
             for (let row = 0; row < data.btnTexts.length; row++) {
                 const bitmapWidths = data.btnTexts[row].map((txt: string) => 2 + (bitmaps.font8.charWidth * (txt.length + 1)));
-                const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0)
+                const scaledWidths = bitmapWidths.map((w: number) => Screen.WIDTH / w)
+                // const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0)
 
-                let x: number = -Screen.HALF_WIDTH + (bitmapWidths[0] >> 1) + 3;
+                let x: number = -Screen.HALF_WIDTH + (scaledWidths[0] >> 1) + 3;
                 for (let col = 0; col < data.btnTexts[row].length; col++) {
-                    const bitmapWidth = bitmapWidths[col]
+                    // const bitmapWidth = bitmapWidths[col]
+                    const bitmapWidth = scaledWidths[col]
                     x+= bitmapWidth >> 1
                     this.btns[row][col] =
                         new Button({
@@ -1003,4 +1023,3 @@ namespace microgui {
         }
     }
 }
-
