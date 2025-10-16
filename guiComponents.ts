@@ -1430,8 +1430,8 @@ namespace microgui {
             this.components[componentID].addContext(context)
         }
 
-        /* override */ startup() {
-            super.startup()
+        /* override */ startup(controlSetupFn?: () => {}) {
+            super.startup(controlSetupFn)
         }
 
         private focus(hideOthers: boolean) {

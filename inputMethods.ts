@@ -178,6 +178,291 @@ namespace microgui {
     }
 
 
+    export enum KeyboardLayouts {
+        QWERTY,
+        NUMERIC
+    }
+
+    interface IKeyboard {
+        appendText(txt: string): void;
+        deletePriorCharacters(n: number): void;
+        swapCase(): void;
+        nextScene(): void;
+    }
+
+    type KeyboardBtnFn = (btn: Button, kb: IKeyboard) => void;
+    type SpecialBtnData = { btnRow: number, btnCol: number, behaviour: (btn: Button, kb: IKeyboard) => void };
+    type KeyboardLayoutData = { 
+        [id: number]: { 
+            btnTexts: string[][], 
+            defaultBtnBehaviour: KeyboardBtnFn, 
+            specialBtnBehaviours: SpecialBtnData[]
+        }
+    };
+
+    const __keyboardLayout: KeyboardLayoutData = {
+        [KeyboardLayouts.QWERTY]: {
+            btnTexts: [
+                ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+                ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
+                ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
+                    ["<-",    "^",    " _______ ",    "ENTER"]
+            ], 
+            defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => {
+                kb.appendText(btn.state[0])
+            },
+            specialBtnBehaviours: [
+                { btnRow: 4, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
+                { btnRow: 4, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.swapCase() }, // Change case
+                { btnRow: 4, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => kb.appendText(" ") }, // Spacebar
+                { btnRow: 4, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.nextScene() } // ENTER
+            ]
+        }
+    };
+
+    export class Keyboard extends CursorSceneWithPriorPage implements IKeyboard {
+        private btns: Button[][]
+        private text: string;
+        private isUpperCase: boolean;
+        private nextBtnFn: (keyboardText: string) => void
+        private keyboardLayout: KeyboardLayouts;
+
+        // Special effects:
+        private frameCounter: number;
+        private shakeText: boolean
+        private shakeTextCounter: number
+
+        constructor(
+            app: AppInterface, 
+            keyboardLayout: KeyboardLayouts,
+            nextBtnFn: (keyboardText: string) => void, 
+            priorScene: CursorSceneWithPriorPage,
+        ) {
+            super(app, () => {app.popScene(); app.pushScene(priorScene)}, new GridNavigator([[]]))
+            this.text = ""
+            this.isUpperCase = true
+
+            this.nextBtnFn = nextBtnFn;
+            this.frameCounter = 0;
+            this.shakeText = false;
+            this.shakeTextCounter = 0;
+
+            this.keyboardLayout = keyboardLayout;
+        }
+
+        startup(controlSetupFn: () => void) {
+            super.startup(controlSetupFn)
+
+            const data = __keyboardLayout[KeyboardLayouts.QWERTY];
+            this.btns = data.btnTexts.map(_ => [])
+
+            for (let row = 0; row < data.btnTexts.length; row++) {
+                const bitmapWidths = data.btnTexts[row].map((txt: string) => 2 + (bitmaps.font8.charWidth * (txt.length + 1)));
+                const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0)
+
+                let x: number = -Screen.HALF_WIDTH + (bitmapWidths[0] >> 1) + 3;
+                for (let col = 0; col < data.btnTexts[row].length; col++) {
+                    const bitmapWidth = bitmapWidths[col]
+                    x+= bitmapWidth >> 1
+                    this.btns[row][col] =
+                        new Button({
+                            parent: null,
+                            style: ButtonStyles.Transparent,
+                            icon: bitmaps.create(bitmapWidth - 4, 10),
+                            ariaId: "",
+                            x,
+                            y: (13 * (row + 1)) - 18,
+                            onClick: (btn: Button) => data.defaultBtnBehaviour(btn, this),
+                            state: [data.btnTexts[row][col]]
+                        })
+                    x += bitmapWidth >> 1;
+                }
+            }
+
+            // Setup special btn behaviours:
+            data.specialBtnBehaviours.forEach(
+                (data: SpecialBtnData, i) => {
+                    this.btns[data.btnRow][data.btnCol].onClick =
+                        (btn: Button) => data.behaviour(btn, this);
+                }
+            )
+            this.navigator.setBtns(this.btns)
+        }
+
+        get textLength() { return this.text.length }
+
+        //-------------------
+        // Interface Methods:
+        //-------------------
+
+        public appendText(str: string) {
+            if (this.textLength < KEYBOARD_MAX_TEXT_LENGTH)
+                this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
+            else
+                this.shakeText = true
+            this.text += str;
+        }
+
+        public deletePriorCharacters(n: number) {
+            this.text =
+                (this.text.length > 0)
+                    ? this.text.substr(0, this.text.length - n)
+                    : this.text
+            this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
+        }
+
+        public swapCase(): void {
+            this.isUpperCase = !this.isUpperCase;
+
+            const swapCaseFn = (this.isUpperCase)
+                ? (t: string) => {return t.toUpperCase()}
+                : (t: string) => {return t.toLowerCase()}
+
+
+            const specialBtnData: SpecialBtnData[] = __keyboardLayout[this.keyboardLayout].specialBtnBehaviours;
+            const specialBtnRows: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnRow);
+            const specialBtnCols: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnCol);
+
+            const isSpecialBtn = (row: number, col: number): boolean => {
+                return (specialBtnRows.indexOf(row) != -1) && (specialBtnRows.indexOf(col) != -1);
+            }
+
+            // Skip special char row:
+            for (let i = 0; i < this.btns.length - 1; i++) {
+                for (let j = 0; j < this.btns[i].length; j++) {
+                    if (!isSpecialBtn)
+                        continue
+
+                    const btnText: string = (this.btns[i][j].state[0] as string)
+                    this.btns[i][j].state[0] = swapCaseFn(btnText);
+                }
+            }
+        }
+
+        public nextScene(): void {
+            this.nextBtnFn(this.text)
+        }
+
+        draw() {
+            this.frameCounter += 1
+
+            // Blue base colour:
+            Screen.fillRect(
+                Screen.LEFT_EDGE,
+                Screen.TOP_EDGE,
+                Screen.WIDTH,
+                Screen.HEIGHT,
+                6 // Blue
+            )
+
+            // Black border around the text window for depth
+            Screen.fillRect(
+                Screen.LEFT_EDGE + 3,
+                Screen.TOP_EDGE + 4,
+                Screen.WIDTH - 7,
+                34,
+                15 // Black
+            )
+
+            // White text window, slightly smaller than the black
+            Screen.fillRect(
+                Screen.LEFT_EDGE + 6,
+                Screen.TOP_EDGE + 6,
+                Screen.WIDTH - 12,
+                32,
+                1 // White
+            )
+
+
+            // Legal text length, draw a flickering cursor using this.frameCounter:
+            if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
+                screen().printCenter(this.text, 17, 15)
+                if (this.frameCounter >= KEYBOARD_FRAME_COUNTER_CURSOR_ON) {
+                    screen().print(
+                        "_",
+                        (screen().width / 2) + ((this.text.length * bitmaps.font8.charWidth) / 2),
+                        17,
+                        15
+                    )
+
+                    if (this.frameCounter >= KEYBOARD_FRAME_COUNTER_CURSOR_OFF)
+                        this.frameCounter = 0
+                }
+            }
+
+            // Don't draw the cursor if beyond the max length, shake the text a bit:
+            else if (this.shakeText) {
+                if (this.shakeTextCounter % 5 == 0) {
+                    screen().print(
+                        this.text,
+                        (screen().width / 2) - ((this.text.length * bitmaps.font8.charWidth) / 2) - 2,
+                        17,
+                        15
+                    )
+                }
+
+                else {
+                    screen().print(
+                        this.text,
+                        (screen().width / 2) - ((this.text.length * bitmaps.font8.charWidth) / 2),
+                        17,
+                        15
+                    )
+                }
+
+                if (this.shakeTextCounter >= 5) {
+                    this.shakeText = false;
+                    this.shakeTextCounter = 0;
+                }
+
+                else
+                    this.shakeTextCounter += 1
+            }
+
+            // At max-length, done shaking the text:
+            else {
+                screen().printCenter(this.text, 17, 15)
+            }
+
+            // Orange Keyboard with a black shadow on the bot & right edge (depth effect):
+
+            // Black border around right & bot edge:
+            Screen.fillRect(
+                Screen.LEFT_EDGE + 4,
+                Screen.TOP_EDGE + 47,
+                Screen.WIDTH - 6,
+                71,
+                15 // Black
+            )
+
+            // Orange keyboard that the white text will be ontop of:
+            Screen.fillRect(
+                Screen.LEFT_EDGE + 4,
+                Screen.TOP_EDGE + 44,
+                Screen.WIDTH - 8,
+                72,
+                4 // Orange
+            )
+
+            for (let i = 0; i < this.btns.length; i++) {
+                for (let j = 0; j < this.btns[i].length; j++) {
+                    const btn = this.btns[i][j];
+                    const btnText = btn.state[0];
+
+                    const x = (screen().width / 2) + btn.xfrm.localPos.x - (btn.icon.width / 2) + 2
+                    const y = (screen().height / 2) + btn.xfrm.localPos.y + font.charHeight - 12
+
+                    btn.draw()
+                    screen().print(btnText, x, y, 1) // White text
+                }
+            }
+
+            super.draw()
+        }
+    }
+
+
     const KEYBOARD_FRAME_COUNTER_CURSOR_ON = 20;
     const KEYBOARD_FRAME_COUNTER_CURSOR_OFF = 40;
     const KEYBOARD_MAX_TEXT_LENGTH = 20
@@ -214,12 +499,12 @@ namespace microgui {
             this.shakeTextCounter = 0;
         }
 
-        /* override */ startup() {
-            super.startup()
+        /* override */ startup(controlSetupFn: () => void) {
+            super.startup(controlSetupFn)
 
             const defaultBehaviour = (btn: Button) => {
                 if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
-                    this.text += this.btnsText[btn.state[0]][btn.state[1]]
+                    this.text += btn.state[0]
                     this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
                 }
                 else {
@@ -417,7 +702,7 @@ namespace microgui {
                 }
             }
 
-            super.draw()
+            // super.draw()
         }
     }
 
@@ -446,11 +731,11 @@ namespace microgui {
             this.next = next
         }
 
-        /* override */ startup() {
-            super.startup()
+        /* override */ startup(controlSetupFn: () => void) {
+            super.startup(controlSetupFn)
 
             const defaultBehaviour = (btn: Button) => {
-                this.text += this.btnText[btn.state[0]] + " "
+                this.text += btn.state[0] + " "
             }
 
             const behaviours = []
@@ -684,8 +969,8 @@ namespace microgui {
             this.callbacks = callbacks
         }
 
-        /* override */ startup() {
-            super.startup()
+        /* override */ startup(controlSetupFn: () => void) {
+            super.startup(controlSetupFn)
 
             for (let i = 0; i < this.callbacks.length; i++) {
                 for (let j = 0; j < this.callbacks[0].length; j++) {
