@@ -1,6 +1,7 @@
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
     import Scene = user_interface_base.Scene
+    import CursorScene = user_interface_base.CursorScene
     import CursorSceneWithPriorPage = user_interface_base.CursorSceneWithPriorPage
     import GridNavigator = user_interface_base.GridNavigator
     import ButtonStyles = user_interface_base.ButtonStyles
@@ -176,7 +177,6 @@ namespace microgui {
         }
     }
 
-
     export enum KeyboardLayouts {
         QWERTY,
         NUMERIC
@@ -187,6 +187,9 @@ namespace microgui {
         deletePriorCharacters(n: number): void;
         swapCase(): void;
         nextScene(): void;
+        textLen(): number;
+        getText(): string;
+        shakeText(): void;
     }
 
     type KeyboardBtnFn = (btn: Button, kb: IKeyboard) => void;
@@ -218,85 +221,139 @@ namespace microgui {
                 { btnRow: 4, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.nextScene() } // ENTER
             ]
         },
+
+        /**
+         * Ensures that the user inputs result in a valid number.
+         * E.g: prevents two decimal places, - only at start, etc
+         */
         [KeyboardLayouts.NUMERIC]: {
             btnTexts: [
                 ["0", "1", "2", "3", "4"],
                 ["5", "6", "7", "8", "9"],
-                ["<-", "+", ".", "ENTER"]
+                ["<-", "-", ".", "ENTER"]
             ],
             defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => {
                 kb.appendText(btn.state[0])
             },
             specialBtnBehaviours: [
                 { btnRow: 2, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
-                { btnRow: 2, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.swapCase() }, // Change case
-                { btnRow: 2, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => kb.appendText(".") }, // Spacebar
+                { btnRow: 2, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => {
+                        if (kb.textLen() == 0)
+                            kb.appendText(btn.state[0])
+                        else
+                            kb.shakeText()
+                    }
+                }, // Add a "-", but only if first symbol,
+                { btnRow: 2, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => {
+                        const txt = kb.getText();
+                        const len = txt.length;
+                        const decimalAlreadyPresent = txt.includes(".")
+                        if (len == 0 || txt[len - 1] == "-" || decimalAlreadyPresent)
+                            kb.shakeText()
+                        else
+                            kb.appendText(".") 
+                    }
+                }, // Decimal point
                 { btnRow: 2, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => {
-                    
-                    kb.nextScene()
-                }} // ENTER
+                        const txt = kb.getText();
+                        const len = txt.length;
+                        if (len > 0 && txt[len - 1] != "-" && txt[len - 1] != ".") // Last rule could be removed, casting "1." to number is valid.
+                            kb.nextScene()
+                        else
+                            kb.shakeText()
+                    }
+                } // ENTER
             ]
         }
     };
 
-    export class Keyboard extends CursorSceneWithPriorPage implements IKeyboard {
+    export class Keyboard extends CursorScene implements IKeyboard {
         private btns: Button[][]
         private text: string;
         private isUpperCase: boolean;
         private nextBtnFn: (keyboardText: string) => void
         private keyboardLayout: KeyboardLayouts;
+        private maxTxtLength: number;
+
+        /** This is just the region with buttons; this Keyboard Scene takes up the entire screen. This keyboardBounds doesn't include the text display. */
+        private keyboardBounds: user_interface_base.Bounds;
 
         // Special effects:
         private frameCounter: number;
-        private shakeText: boolean
-        private shakeTextCounter: number
+        private shakingText: boolean;
+        private shakeTextCounter: number;
+        private shakeStrength: number = 5
+    
+        private readonly FRAME_COUNTER_CURSOR_ON = 20;
+        private readonly FRAME_COUNTER_CURSOR_OFF = 60;
+        private readonly MAX_TEXT_LENGTH = 22;
 
-        constructor(
+        private foregroundColor: number;
+
+        constructor(opts: {
             app: AppInterface, 
-            keyboardLayout: KeyboardLayouts,
-            nextBtnFn: (keyboardText: string) => void, 
-            priorScene: CursorSceneWithPriorPage,
-        ) {
-            super(app, () => {app.popScene(); app.pushScene(priorScene)}, new GridNavigator([[]]))
+            layout: KeyboardLayouts,
+            cb: (keyboardText: string) => void,
+            foregroundColor?: number,
+            backgroundColor?: number,
+            maxTxtLength?: number
+        }) {
+            super(opts.app, new GridNavigator([[]])) // GridNavigator setup in startup()
             this.text = ""
             this.isUpperCase = true
+            this.maxTxtLength = (opts.maxTxtLength) ? Math.min(opts.maxTxtLength, this.MAX_TEXT_LENGTH) : this.MAX_TEXT_LENGTH
 
-            this.nextBtnFn = nextBtnFn;
+            this.nextBtnFn = opts.cb;
             this.frameCounter = 0;
-            this.shakeText = false;
+            this.shakingText = false;
             this.shakeTextCounter = 0;
 
-            this.keyboardLayout = keyboardLayout;
+            this.keyboardLayout = opts.layout;
+
+            this.keyboardBounds = new user_interface_base.Bounds({
+                width: Screen.WIDTH - 8,
+                height: 72,
+                top: Screen.TOP_EDGE + 44,
+                left: Screen.LEFT_EDGE + 4,
+            })
+
+            this.foregroundColor = (opts.foregroundColor) ? opts.foregroundColor : 4; // Default to orange
+            this.backgroundColor = (opts.backgroundColor) ? opts.backgroundColor : 6; // Default to blue
         }
 
-        startup(controlSetupFn: () => void) {
+        startup(controlSetupFn?: () => void) {
             super.startup(controlSetupFn)
 
             const data = __keyboardLayout[this.keyboardLayout];
             this.btns = data.btnTexts.map(_ => []);
 
-            for (let row = 0; row < data.btnTexts.length; row++) {
-                const bitmapWidths = data.btnTexts[row].map((txt: string) => 2 + (bitmaps.font8.charWidth * (txt.length + 1)));
-                const scaledWidths = bitmapWidths.map((w: number) => Screen.WIDTH / w)
-                // const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0)
+            const charWidth = bitmaps.font8.charWidth
+            const charHeight = bitmaps.font8.charHeight
 
-                let x: number = -Screen.HALF_WIDTH + (scaledWidths[0] >> 1) + 3;
+            const ySpacing = (this.keyboardBounds.height - charHeight) / (data.btnTexts.length);
+
+            for (let row = 0; row < data.btnTexts.length; row++) {
+                const bitmapWidths = data.btnTexts[row].map((txt: string) => (charWidth * (txt.length + 1) - 4));
+                const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0);
+
+                const xSpacing = (this.keyboardBounds.width - totalWidth) / (bitmapWidths.length + 2);
+
+                let x = -Screen.HALF_WIDTH + xSpacing;
                 for (let col = 0; col < data.btnTexts[row].length; col++) {
-                    // const bitmapWidth = bitmapWidths[col]
-                    const bitmapWidth = scaledWidths[col]
-                    x+= bitmapWidth >> 1
+                    const bitmapWidth = bitmapWidths[col]
+                    x += (bitmapWidths[col] + xSpacing) >> 1
                     this.btns[row][col] =
                         new Button({
                             parent: null,
                             style: ButtonStyles.Transparent,
-                            icon: bitmaps.create(bitmapWidth - 4, 10),
+                            icon: bitmaps.create(bitmapWidth, charHeight),
                             ariaId: "",
                             x,
-                            y: (13 * (row + 1)) - 18,
+                            y: -(charHeight >> 1) + (ySpacing * row),
                             onClick: (btn: Button) => data.defaultBtnBehaviour(btn, this),
                             state: [data.btnTexts[row][col]]
                         })
-                    x += bitmapWidth >> 1;
+                    x += (bitmapWidths[col] + xSpacing) >> 1
                 }
             }
 
@@ -307,21 +364,20 @@ namespace microgui {
                         (btn: Button) => data.behaviour(btn, this);
                 }
             )
-            this.navigator.setBtns(this.btns)
+            this.navigator.setBtns(this.btns);
         }
-
-        get textLength() { return this.text.length }
 
         //-------------------
         // Interface Methods:
         //-------------------
 
         public appendText(str: string) {
-            if (this.textLength < KEYBOARD_MAX_TEXT_LENGTH)
+            if (this.textLen() < this.maxTxtLength) {
                 this.frameCounter = KEYBOARD_FRAME_COUNTER_CURSOR_ON
-            else
-                this.shakeText = true
-            this.text += str;
+                this.text += str;
+            } else {
+                this.shakingText = true
+            }
         }
 
         public deletePriorCharacters(n: number) {
@@ -360,12 +416,31 @@ namespace microgui {
             }
         }
 
+        public getText() {
+            return this.text
+        }
+
+        public textLen() {
+            return this.text.length;
+        }
+
         public nextScene(): void {
             this.nextBtnFn(this.text)
         }
 
+        public shakeText(): void {
+            this.shakingText = true
+        }
+
+
         draw() {
-            this.frameCounter += 1
+            this.frameCounter += 1;
+
+            const charWidth = bitmaps.font8.charWidth
+            const charHeight = bitmaps.font8.charHeight
+
+            const white = 1;
+            const black = 15;
 
             // Blue base colour:
             Screen.fillRect(
@@ -373,7 +448,7 @@ namespace microgui {
                 Screen.TOP_EDGE,
                 Screen.WIDTH,
                 Screen.HEIGHT,
-                6 // Blue
+                this.backgroundColor
             )
 
             // Black border around the text window for depth
@@ -382,7 +457,7 @@ namespace microgui {
                 Screen.TOP_EDGE + 4,
                 Screen.WIDTH - 7,
                 34,
-                15 // Black
+                black
             )
 
             // White text window, slightly smaller than the black
@@ -391,78 +466,74 @@ namespace microgui {
                 Screen.TOP_EDGE + 6,
                 Screen.WIDTH - 12,
                 32,
-                1 // White
+                white
             )
 
-
-            // Legal text length, draw a flickering cursor using this.frameCounter:
-            if (this.text.length < KEYBOARD_MAX_TEXT_LENGTH) {
-                screen().printCenter(this.text, 17, 15)
-                if (this.frameCounter >= KEYBOARD_FRAME_COUNTER_CURSOR_ON) {
-                    screen().print(
-                        "_",
-                        (screen().width / 2) + ((this.text.length * bitmaps.font8.charWidth) / 2),
-                        17,
-                        15
-                    )
-
-                    if (this.frameCounter >= KEYBOARD_FRAME_COUNTER_CURSOR_OFF)
-                        this.frameCounter = 0
-                }
-            }
+            const txtXpos = (this.text.length * charWidth) >> 1;
+            const txtYPos = 17;
 
             // Don't draw the cursor if beyond the max length, shake the text a bit:
-            else if (this.shakeText) {
+            if (this.shakingText) {
                 if (this.shakeTextCounter % 5 == 0) {
                     screen().print(
                         this.text,
-                        (screen().width / 2) - ((this.text.length * bitmaps.font8.charWidth) / 2) - 2,
-                        17,
-                        15
+                        Screen.HALF_WIDTH - txtXpos - this.shakeStrength,
+                        txtYPos,
+                        black
                     )
-                }
-
-                else {
+                } else {
                     screen().print(
                         this.text,
-                        (screen().width / 2) - ((this.text.length * bitmaps.font8.charWidth) / 2),
-                        17,
-                        15
+                        Screen.HALF_WIDTH - txtXpos,
+                        txtYPos,
+                        black
                     )
                 }
 
                 if (this.shakeTextCounter >= 5) {
-                    this.shakeText = false;
+                    this.shakingText = false;
                     this.shakeTextCounter = 0;
-                }
-
-                else
+                } else {
                     this.shakeTextCounter += 1
-            }
+                }
+            } else { // At max-length, done shaking the text
+                screen().printCenter(
+                    this.text, 
+                    txtYPos, 
+                    black
+                )
 
-            // At max-length, done shaking the text:
-            else {
-                screen().printCenter(this.text, 17, 15)
+                if (this.frameCounter >= this.FRAME_COUNTER_CURSOR_ON) {
+                    screen().print(
+                        "_",
+                        Screen.HALF_WIDTH + txtXpos,
+                        txtYPos,
+                        black
+                    )
+
+                    if (this.frameCounter >= this.FRAME_COUNTER_CURSOR_OFF)
+                        this.frameCounter = 0
+                }
             }
 
             // Orange Keyboard with a black shadow on the bot & right edge (depth effect):
 
             // Black border around right & bot edge:
             Screen.fillRect(
-                Screen.LEFT_EDGE + 4,
-                Screen.TOP_EDGE + 47,
-                Screen.WIDTH - 6,
-                71,
-                15 // Black
+                this.keyboardBounds.left,
+                this.keyboardBounds.top,
+                this.keyboardBounds.width + 2,
+                this.keyboardBounds.height + 2,
+                black
             )
 
             // Orange keyboard that the white text will be ontop of:
             Screen.fillRect(
-                Screen.LEFT_EDGE + 4,
-                Screen.TOP_EDGE + 44,
-                Screen.WIDTH - 8,
-                72,
-                4 // Orange
+                this.keyboardBounds.left,
+                this.keyboardBounds.top,
+                this.keyboardBounds.width,
+                this.keyboardBounds.height,
+                this.foregroundColor
             )
 
             for (let i = 0; i < this.btns.length; i++) {
@@ -470,11 +541,16 @@ namespace microgui {
                     const btn = this.btns[i][j];
                     const btnText = btn.state[0];
 
-                    const x = (screen().width / 2) + btn.xfrm.localPos.x - (btn.icon.width / 2) + 2
-                    const y = (screen().height / 2) + btn.xfrm.localPos.y + font.charHeight - 12
+                    const x = (screen().width / 2) + btn.xfrm.localPos.x - (btn.icon.width / 2) + 1
+                    const y = (screen().height / 2) + btn.xfrm.localPos.y + charHeight - 12
 
                     btn.draw()
-                    screen().print(btnText, x, y, 1) // White text
+                    screen().print(
+                        btnText, 
+                        x, 
+                        y, 
+                        white
+                    )
                 }
             }
 
