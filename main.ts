@@ -5,7 +5,6 @@ namespace microcode {
     import Button = user_interface_base.Button
 
     import App = microgui.App
-    import KeyboardMenu = microgui.KeyboardMenu
     import ButtonCollection = microgui.ButtonCollection
     import GUIComponentAlignment = microgui.GUIComponentAlignment
     import TextBox = microgui.TextBox
