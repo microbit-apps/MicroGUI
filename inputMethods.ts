@@ -177,6 +177,30 @@ namespace microgui {
         }
     }
 
+    /**
+     * This is from microcode-v2/assets.ts
+     * TODO: Move this asset into user-interface-base/coreAssets.ts 
+     *      and make both microgui and microcode-v2 reference that instead.
+     */
+    const btn_delete: Bitmap = bmp`
+        . . . . . . . . . . . . . . . .
+        . . . . . . c f f . . . . . . .
+        . . . . . c . . . f . . . . . .
+        . . . . c c c f f f f . . . . .
+        . . . c 1 1 d d d b b f . . . .
+        . . c c c c c f f f f f f . . .
+        . . . c b c b c b c c f . . . .
+        . . . c 1 c d c d c b f d . . .
+        . . . c 1 c d c d c b f d . . .
+        . . . c 1 c d c d c b f d . . .
+        . . . c 1 c d c d c b f d . . .
+        . . . c 1 1 d d d b b f d . . .
+        . . . c 1 1 d d d b b f d . . .
+        . . . . c c c f f f f d . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+    `
+
     export enum KeyboardLayouts {
         QWERTY,
         NUMERIC
@@ -190,13 +214,14 @@ namespace microgui {
         textLen(): number;
         getText(): string;
         shakeText(): void;
+        deleteFn(): void;
     }
 
     type KeyboardBtnFn = (btn: Button, kb: IKeyboard) => void;
     type SpecialBtnData = { btnRow: number, btnCol: number, behaviour: (btn: Button, kb: IKeyboard) => void };
     type KeyboardLayoutData = { 
         [id: number]: { 
-            btnTexts: string[][], 
+            btnTexts: (string | Bitmap)[][], 
             defaultBtnBehaviour: KeyboardBtnFn, 
             specialBtnBehaviours: SpecialBtnData[]
         }
@@ -230,21 +255,42 @@ namespace microgui {
             btnTexts: [
                 ["0", "1", "2", "3", "4"],
                 ["5", "6", "7", "8", "9"],
-                ["<-", "-", ".", "ENTER"]
+                [btn_delete, "<-", "-", ".", "ENTER"]
             ],
-            defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => {
-                kb.appendText(btn.state[0])
-            },
+            defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => { // Default Behaviour: Prevent leading zeroes
+                const btnChar = btn.state[0];
+                const txt = kb.getText();
+                const txtLen = txt.length;
+
+                if (txtLen == 0) {
+                    kb.appendText(btnChar)
+                    return;
+                }
+
+                // Illegal cases: where there's a "0" or a "-0" and you want to add anything except a '.'
+                // The decimal point '.' is allowed via the specialBtnBehaviour.
+                const leadingZeroCase1 = txtLen == 1 && txt[0] == "0";
+                const leadingZeroCase2 = txtLen == 2 && txt[0] == "-" && txt[1] == "0";
+                if (leadingZeroCase1 || leadingZeroCase2)
+                    kb.shakeText()
+                else
+                    kb.appendText(btnChar)
+
+            }, // End of: default behaviour: Prevent leading zeroes
             specialBtnBehaviours: [
-                { btnRow: 2, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
-                { btnRow: 2, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => {
+                { btnRow: 2, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => { // btn_delete
+                        kb.deleteFn();
+                    }
+                }, // END OF: btn_delete
+                { btnRow: 2, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
+                { btnRow: 2, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => { // Minus symbol: Add a "-", but only if first symbol,
                         if (kb.textLen() == 0)
                             kb.appendText(btn.state[0])
                         else
                             kb.shakeText()
                     }
-                }, // Add a "-", but only if first symbol,
-                { btnRow: 2, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => {
+                }, // END OF: Minus symbol: Add a "-", but only if first symbol,
+                { btnRow: 2, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => { // Decimal point
                         const txt = kb.getText();
                         const len = txt.length;
                         const decimalAlreadyPresent = txt.includes(".")
@@ -253,8 +299,8 @@ namespace microgui {
                         else
                             kb.appendText(".") 
                     }
-                }, // Decimal point
-                { btnRow: 2, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => {
+                }, // END OF: Decimal point
+                { btnRow: 2, btnCol: 4, behaviour: (btn: Button, kb: IKeyboard) => { // Enter
                         const txt = kb.getText();
                         const len = txt.length;
                         if (len > 0 && txt[len - 1] != "-" && txt[len - 1] != ".") // Last rule could be removed, casting "1." to number is valid.
@@ -262,7 +308,7 @@ namespace microgui {
                         else
                             kb.shakeText()
                     }
-                } // ENTER
+                } // END OF: ENTER
             ]
         }
     };
@@ -283,12 +329,14 @@ namespace microgui {
         private shakingText: boolean;
         private shakeTextCounter: number;
         private shakeStrength: number = 5
+        private txtColor: number;
     
         private readonly FRAME_COUNTER_CURSOR_ON = 20;
         private readonly FRAME_COUNTER_CURSOR_OFF = 60;
         private readonly MAX_TEXT_LENGTH = 22;
 
         private foregroundColor: number;
+        private passedDeleteFn: () => void;
 
         constructor(opts: {
             app: AppInterface, 
@@ -296,7 +344,10 @@ namespace microgui {
             cb: (keyboardText: string) => void,
             foregroundColor?: number,
             backgroundColor?: number,
-            maxTxtLength?: number
+            maxTxtLength?: number,
+            txtColor?: number,
+            deleteFn?: () => void,
+            backBtn?: () => void
         }) {
             super(opts.app, new GridNavigator([[]])) // GridNavigator setup in startup()
             this.text = ""
@@ -319,7 +370,11 @@ namespace microgui {
 
             this.foregroundColor = (opts.foregroundColor) ? opts.foregroundColor : 4; // Default to orange
             this.backgroundColor = (opts.backgroundColor) ? opts.backgroundColor : 6; // Default to blue
+
+            this.txtColor = (opts.txtColor) ? opts.txtColor : 1;
+            this.passedDeleteFn = (opts.deleteFn) ? opts.deleteFn : () => {};
         }
+
 
         startup(controlSetupFn?: () => void) {
             super.startup(controlSetupFn)
@@ -333,25 +388,32 @@ namespace microgui {
             const ySpacing = (this.keyboardBounds.height - charHeight) / (data.btnTexts.length);
 
             for (let row = 0; row < data.btnTexts.length; row++) {
-                const bitmapWidths = data.btnTexts[row].map((txt: string) => (charWidth * (txt.length + 1) - 4));
-                const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0);
+                const bitmapWidths = data.btnTexts[row].map((txtOrBitmap: string | Bitmap) => {
+                    if (typeof (txtOrBitmap) == "string")
+                        return charWidth * (txtOrBitmap.length + 1) - 4;
+                    else
+                        return txtOrBitmap.width + 3;
+                });
 
+                const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0);
                 const xSpacing = (this.keyboardBounds.width - totalWidth) / (bitmapWidths.length + 2);
 
                 let x = -Screen.HALF_WIDTH + xSpacing;
                 for (let col = 0; col < data.btnTexts[row].length; col++) {
+                    const btnState: (string | Bitmap) = data.btnTexts[row][col];
                     const bitmapWidth = bitmapWidths[col]
+                    
                     x += (bitmapWidths[col] + xSpacing) >> 1
                     this.btns[row][col] =
                         new Button({
                             parent: null,
                             style: ButtonStyles.Transparent,
-                            icon: bitmaps.create(bitmapWidth, charHeight),
+                            icon: (typeof (btnState) == "string") ? bitmaps.create(bitmapWidth, charHeight) : btnState,
                             ariaId: "",
                             x,
                             y: -(charHeight >> 1) + (ySpacing * row),
                             onClick: (btn: Button) => data.defaultBtnBehaviour(btn, this),
-                            state: [data.btnTexts[row][col]]
+                            state: (typeof (btnState) == "string") ? [btnState] : []
                         })
                     x += (bitmapWidths[col] + xSpacing) >> 1
                 }
@@ -414,6 +476,10 @@ namespace microgui {
                     this.btns[i][j].state[0] = swapCaseFn(btnText);
                 }
             }
+        }
+
+        public deleteFn(): void {
+            this.passedDeleteFn();
         }
 
         public getText() {
@@ -539,18 +605,20 @@ namespace microgui {
             for (let i = 0; i < this.btns.length; i++) {
                 for (let j = 0; j < this.btns[i].length; j++) {
                     const btn = this.btns[i][j];
-                    const btnText = btn.state[0];
+                    const btnText = (btn.state.length > 0) ? btn.state[0] : null;
 
                     const x = (screen().width / 2) + btn.xfrm.localPos.x - (btn.icon.width / 2) + 1
                     const y = (screen().height / 2) + btn.xfrm.localPos.y + charHeight - 12
 
                     btn.draw()
-                    screen().print(
-                        btnText, 
-                        x, 
-                        y, 
-                        white
-                    )
+
+                    if (btnText)
+                        screen().print(
+                            btnText, 
+                            x, 
+                            y, 
+                            this.txtColor
+                        )
                 }
             }
 
@@ -563,6 +631,10 @@ namespace microgui {
     const KEYBOARD_FRAME_COUNTER_CURSOR_OFF = 40;
     const KEYBOARD_MAX_TEXT_LENGTH = 20
 
+
+    /**
+     * Deprecated.
+     */
     export class KeyboardMenu extends CursorSceneWithPriorPage {
         private static WIDTHS: number[] = [10, 10, 10, 10, 4]
         private btns: Button[][]
@@ -1099,3 +1171,4 @@ namespace microgui {
         }
     }
 }
+
