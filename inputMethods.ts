@@ -343,14 +343,14 @@ namespace microgui {
             cb: (keyboardText: string) => void,
             foregroundColor?: number,
             backgroundColor?: number,
-            defaultText?: string,
+            defaultTxt?: string,
             maxTxtLength?: number,
             txtColor?: number,
             deleteFn?: () => void,
             backBtn?: () => void
         }) {
             super(opts.app, new GridNavigator([[]])) // GridNavigator setup in startup()
-            this.text = (opts.defaultText) ? opts.defaultText : ""
+            this.text = (opts.defaultTxt) ? opts.defaultTxt : ""
             this.isUpperCase = true
             this.maxTxtLength = (opts.maxTxtLength) ? Math.min(opts.maxTxtLength, this.MAX_TEXT_LENGTH) : this.MAX_TEXT_LENGTH
 
