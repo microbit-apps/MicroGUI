@@ -56,37 +56,37 @@ namespace microgui {
             this.next = next;
             this.back = back;
 
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.left.id,
                 () => this.leftBtnPressed()
             )
 
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.right.id,
                 () => this.rightBtnPressed()
             )
 
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.up.id,
                 () => this.upBtnPressed()
             )
 
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.down.id,
                 () => this.downBtnPressed()
             )
 
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.A.id,
                 () => this.aBtnPressed()
             )
 
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Pressed,
                 controller.B.id,
                 () => this.bBtnPressed()
@@ -95,7 +95,7 @@ namespace microgui {
 
         upBtnPressed() {
             let tick = true;
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Released,
                 controller.up.id,
                 () => tick = false
@@ -104,12 +104,12 @@ namespace microgui {
                 this.tickerValues[this.currentTickerIndex] += 1
                 basic.pause(100)
             }
-            control.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { })
+            context.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { })
         }
 
         downBtnPressed() {
             let tick = true;
-            control.onEvent(
+            context.onEvent(
                 ControllerButtonEvent.Released,
                 controller.down.id,
                 () => tick = false
@@ -118,7 +118,7 @@ namespace microgui {
                 this.tickerValues[this.currentTickerIndex] -= 1
                 basic.pause(100)
             }
-            control.onEvent(ControllerButtonEvent.Released, controller.down.id, () => { })
+            context.onEvent(ControllerButtonEvent.Released, controller.down.id, () => { })
         }
 
         leftBtnPressed() {
@@ -343,13 +343,14 @@ namespace microgui {
             cb: (keyboardText: string) => void,
             foregroundColor?: number,
             backgroundColor?: number,
+            defaultText?: string,
             maxTxtLength?: number,
             txtColor?: number,
             deleteFn?: () => void,
             backBtn?: () => void
         }) {
             super(opts.app, new GridNavigator([[]])) // GridNavigator setup in startup()
-            this.text = ""
+            this.text = (opts.defaultText) ? opts.defaultText : ""
             this.isUpperCase = true
             this.maxTxtLength = (opts.maxTxtLength) ? Math.min(opts.maxTxtLength, this.MAX_TEXT_LENGTH) : this.MAX_TEXT_LENGTH
 
