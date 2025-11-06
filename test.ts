@@ -27,17 +27,17 @@ namespace microcode {
     app,
     layout: microgui.KeyboardLayouts.NUMERIC,
     cb: (txt: string) => { basic.showString(txt) },
-    foregroundColor: 2,                             // optional arg
-    backgroundColor: 6,                             // optional arg
-    defaultTxt: "0",                                // optional arg
-    maxTxtLength: 6,                                // optional arg
-    txtColor: 1,                                    // optional arg
-    deleteFn: () => { basic.showString("Bye") }     // optional arg
+    foregroundColor: 2,                              // optional arg
+    backgroundColor: 6,                              // optional arg
+    defaultTxt: "0",                                 // optional arg
+    maxTxtLength: 6,                                 // optional arg
+    txtColor: 1,                                     // optional arg
+    deleteFn: () => basic.showString("Bye"),     // optional arg
+    backBtn: () => basic.showNumber(2)
   });
 
   app.popScene();
   app.pushScene(kb);
-
   // Example 1a:
 
   // const simpleTextComponent = new TextBox({
