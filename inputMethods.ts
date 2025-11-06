@@ -351,8 +351,8 @@ namespace microgui {
             defaultTxt?: string,
             maxTxtLength?: number,
             txtColor?: number,
-            deleteFn?: () => void,
-            backBtn?: () => void
+            deleteFn?: (str?: string) => void,
+            backBtn?: (str?: string) => void
         }) {
             super(opts.app, new GridNavigator([[]])) // GridNavigator setup in startup()
             this.text = (opts.defaultTxt) ? opts.defaultTxt : ""
