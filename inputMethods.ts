@@ -338,9 +338,9 @@ namespace microgui {
         private readonly MAX_TEXT_LENGTH = 22;
 
         private foregroundColor: number;
-        private passedDeleteFn: () => void;
+        private passedDeleteFn: (str?: string) => void;
         /** The passed Back Btn function is needed since its given to the constructor, but used by startup()  */
-        private passedBackBtn: () => void;
+        private passedBackBtn: (str?: string) => void;
 
         constructor(opts: {
             app: AppInterface, 
