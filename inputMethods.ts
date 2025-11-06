@@ -433,7 +433,7 @@ namespace microgui {
                 }
             )
 
-            context.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => this.passedBackBtn())
+            context.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => this.passedBackBtn(this.text))
             this.navigator.setBtns(this.btns);
         }
 
@@ -487,7 +487,7 @@ namespace microgui {
         }
 
         public deleteFn(): void {
-            this.passedDeleteFn();
+            this.passedDeleteFn(this.text);
         }
 
         public getText() {
