@@ -7,7 +7,7 @@
         "radio": "*",
         "microphone": "*",
         "datalogger": "*",
-        "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.32"
+        "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.33"
     },
     "files": [
         "app.ts",
