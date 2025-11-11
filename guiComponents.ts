@@ -1302,46 +1302,19 @@ namespace microgui {
                 this.btns[this.selectedTextBtnIndex].click();
             })
 
+
             context.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
-                let tick = true;
-                context.onEvent(
-                    ControllerButtonEvent.Released,
-                    controller.up.id,
-                    () => tick = false
-                )
+                this.btns[this.selectedTextBtnIndex].setSelected(false);
+                const len = this.btns.length
+                this.selectedTextBtnIndex = (((this.selectedTextBtnIndex - 1) % len) + len) % len
 
-                // Control logic:
-                while (tick) {
-                    this.btns[this.selectedTextBtnIndex].setSelected(false);
-                    const len = this.btns.length
-                    this.selectedTextBtnIndex = (((this.selectedTextBtnIndex - 1) % len) + len) % len
-
-                    this.btns[this.selectedTextBtnIndex].setSelected(true)
-                    basic.pause(200) // tick rate
-                }
-
-                // Reset binding
-                context.onEvent(ControllerButtonEvent.Released, controller.up.id, () => { });
+                this.btns[this.selectedTextBtnIndex].setSelected(true)
             });
 
             context.onEvent(ControllerButtonEvent.Pressed, controller.down.id, () => {
-                let tick = true;
-                context.onEvent(
-                    ControllerButtonEvent.Released,
-                    controller.down.id,
-                    () => tick = false
-                )
-
-                // Control logic:
-                while (tick) {
-                    this.btns[this.selectedTextBtnIndex].setSelected(false)
-                    this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.btns.length
-                    this.btns[this.selectedTextBtnIndex].setSelected(true)
-                    basic.pause(200) // tick rate
-                }
-
-                // Reset binding
-                context.onEvent(ControllerButtonEvent.Released, controller.down.id, () => { });
+                this.btns[this.selectedTextBtnIndex].setSelected(false)
+                this.selectedTextBtnIndex = (this.selectedTextBtnIndex + 1) % this.btns.length
+                this.btns[this.selectedTextBtnIndex].setSelected(true)
             });
         }
 
