@@ -1,5 +1,6 @@
 
 
+
 //% block="MicroGUI" weight=100, color=#000A83
 namespace microgui {
     import AppInterface = user_interface_base.AppInterface
@@ -1200,13 +1201,16 @@ namespace microgui {
 
     //% block="Radio Button Collection" weight=50, color=#F6FAB4
     export class RadioButtonCollection extends GUIComponentAbstract {
+        private static MINIMUM_BUTTON_Y_SPACING: number = 2;
+
         private title: string;
         private btns: RadioButton[]
         private selectedTextBtnIndex: number;
 
         private xBorder = 12
         private minYBorder = 5;
-        private static MINIMUM_BUTTON_Y_SPACING: number = 2;
+    
+        private backBtn: ((btn?: Button) => void) | null;
 
         constructor(opts: {
             alignment: GUIComponentAlignment,
@@ -1220,7 +1224,8 @@ namespace microgui {
             colour?: number,
             border?: boolean,
             title?: string,
-            text?: string | string[]
+            text?: string | string[],
+            backBtn?: (btn?: Button) => void
         }) {
             super({
                 alignment: opts.alignment,
@@ -1257,6 +1262,8 @@ namespace microgui {
                 this.selectedTextBtnIndex = 0
                 this.btns[this.selectedTextBtnIndex].setSelected(true)
             };
+
+            this.backBtn = opts.backBtn ? opts.backBtn : null;
 
             super.makeActive();
             this.setupButtonBindings();
@@ -1302,6 +1309,10 @@ namespace microgui {
                 this.btns[this.selectedTextBtnIndex].click();
             })
 
+            if (this.backBtn)
+                context.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => {
+                    this.backBtn();
+                })
 
             context.onEvent(ControllerButtonEvent.Pressed, controller.up.id, () => {
                 this.btns[this.selectedTextBtnIndex].setSelected(false);
@@ -1771,3 +1782,4 @@ namespace microgui {
         }
     }
 }
+
