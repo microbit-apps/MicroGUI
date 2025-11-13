@@ -1,30 +1,30 @@
 {
-  "name": "MicroGUI",
-  "version": "0.0.35",
-  "description": "",
-  "dependencies": {
-    "core": "*",
-    "radio": "*",
-    "microphone": "*",
-    "datalogger": "*",
-    "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.33"
-  },
-  "files": [
-    "app.ts",
-    "analytics.ts",
-    "inputMethods.ts",
-    "graphableFunction.ts",
-    "guiComponents.ts"
-  ],
-  "testFiles": [
-    "test.ts"
-  ],
-  "targetVersions": {
-    "target": "7.1.15",
-    "targetId": "microbit"
-  },
-  "supportedTargets": [
-    "microbit"
-  ],
-  "preferredEditor": "blocksprj"
+    "name": "MicroGUI",
+    "version": "0.0.36",
+    "description": "",
+    "dependencies": {
+        "core": "*",
+        "radio": "*",
+        "microphone": "*",
+        "datalogger": "*",
+        "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.33"
+    },
+    "files": [
+        "app.ts",
+        "analytics.ts",
+        "inputMethods.ts",
+        "graphableFunction.ts",
+        "guiComponents.ts"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "targetVersions": {
+        "target": "7.1.15",
+        "targetId": "microbit"
+    },
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "blocksprj"
 }
