@@ -358,9 +358,9 @@ namespace microgui {
     private readonly MAX_TEXT_LENGTH = 22;
 
     private foregroundColor: number;
-    private passedDeleteFn: () => void;
+    private passedDeleteFn: (str?: string) => void;
     /** The passed Back Btn function is needed since its given to the constructor, but used by startup()  */
-    private passedBackBtn: () => void;
+    private passedBackBtn: (str?: string) => void;
 
     constructor(opts: {
       app: AppInterface,
@@ -371,8 +371,8 @@ namespace microgui {
       defaultTxt?: string,
       maxTxtLength?: number,
       txtColor?: number,
-      deleteFn?: () => void,
-      backBtn?: () => void
+      deleteFn?: (str?: string) => void,
+      backBtn?: (str?: string) => void
     }) {
       super(opts.app, new GridNavigator([[]])) // GridNavigator setup in startup()
       this.text = (opts.defaultTxt) ? opts.defaultTxt : ""
@@ -453,7 +453,7 @@ namespace microgui {
         }
       )
 
-      context.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => this.passedBackBtn())
+      context.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => this.passedBackBtn(this.text))
       this.navigator.setBtns(this.btns);
     }
 
@@ -511,7 +511,7 @@ namespace microgui {
     }
 
     public deleteFn(): void {
-      this.passedDeleteFn();
+      this.passedDeleteFn(this.text);
     }
 
     public getText() {
