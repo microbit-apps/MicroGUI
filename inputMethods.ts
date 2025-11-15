@@ -1,4 +1,3 @@
-
 namespace microgui {
   import AppInterface = user_interface_base.AppInterface
   import Scene = user_interface_base.Scene
@@ -190,20 +189,22 @@ namespace microgui {
         . . . c 1 1 d d d b b f . . . .
         . . c c c c c f f f f f f . . .
         . . . c b c b c b c c f . . . .
-        . . . c 1 c d c d c b f d . . .
-        . . . c 1 c d c d c b f d . . .
-        . . . c 1 c d c d c b f d . . .
-        . . . c 1 c d c d c b f d . . .
-        . . . c 1 1 d d d b b f d . . .
-        . . . c 1 1 d d d b b f d . . .
-        . . . . c c c f f f f d . . . .
+        . . . c 1 c d c d c b f . . . .
+        . . . c 1 c d c d c b f . . . .
+        . . . c 1 c d c d c b f . . . .
+        . . . c 1 c d c d c b f . . . .
+        . . . c 1 1 d d d b b f . . . .
+        . . . c 1 1 d d d b b f . . . .
+        . . . . c c c f f f f . . . . .
         . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .
     `
 
   export enum KeyboardLayouts {
     QWERTY,
-    NUMERIC
+    NUMERIC,
+    NUMERIC_POSITIVE_ONLY,
+    NUMERIC_WITH_DELETE
   }
 
   interface IKeyboard {
@@ -219,7 +220,7 @@ namespace microgui {
   }
 
   type KeyboardBtnFn = (btn: Button, kb: IKeyboard) => void;
-  type SpecialBtnData = { btnRow: number, btnCol: number, behaviour: (btn: Button, kb: IKeyboard) => void };
+  type SpecialBtnData = { btnRow: number, btnCol: number, behaviour: KeyboardBtnFn };
   type KeyboardLayoutData = {
     [id: number]: {
       btnTexts: (string | Bitmap)[][],
@@ -227,6 +228,68 @@ namespace microgui {
       specialBtnBehaviours: SpecialBtnData[]
     }
   };
+
+  const __kbBehaviourNumericDefault: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Default Behaviour: Prevent leading zeroes
+    const btnChar = btn.state[0];
+    const txt = kb.getText();
+    const txtLen = txt.length;
+
+    if (txtLen == 0) {
+      kb.appendText(btnChar)
+      return;
+    }
+
+    // Illegal cases: where there's a "0" or a "-0" and you want to add anything except a '.'
+    // The decimal point '.' is allowed via the specialBtnBehaviour.
+    const leadingZeroCase1 = txtLen == 1 && txt[0] == "0";
+    const leadingZeroCase2 = txtLen == 2 && txt[0] == "-" && txt[1] == "0";
+    if (leadingZeroCase1 || leadingZeroCase2)
+      kb.shakeText()
+    else
+      kb.appendText(btnChar)
+
+  } // End of: default behaviour: Prevent leading zeroes
+
+  const __kbBehaviourNumericMinus: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Minus symbol: Toggle "-" at the start.
+    const txt = kb.getText();
+
+    // Remove "-" if its already there:
+    if (txt[0] == btn.state[0])
+      if (txt.length == 1)
+        kb.setText("")
+      else
+        kb.setText(txt.slice(1))
+    else // Add in "-":
+      kb.setText("-" + txt)
+  } // END OF: Minus symbol: Toggle "-" at the start.
+
+
+  const __kbBehaviourNumericDeimcal: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Decimal point
+    const txt = kb.getText();
+    const len = txt.length;
+    const decimalAlreadyPresent = txt.includes(".")
+    if (len == 0 || txt[len - 1] == "-" || decimalAlreadyPresent)
+      kb.shakeText()
+    else
+      kb.appendText(".")
+  } // END OF: Decimal point
+
+  const __kbBehaviourNumericEnter: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Enter
+    const txt = kb.getText();
+    const len = txt.length;
+    const lenRule = txt[len - 1] != "-";
+    const noDecimalEnding = txt[len - 1] != "."; // Illegal: 0. , -0. , -10. Okay: -0.00.. and 0.000 (becomes 0 later)
+
+    if (len > 0 && lenRule && noDecimalEnding) { // Last rule could be removed, casting "1." to number is valid.
+      // Turn -0 and -0.000... into 0 before returning
+      const txtAsNum: number = +txt;
+      if (txtAsNum == 0 || txtAsNum == -0)
+        kb.setText("0")
+      kb.nextScene()
+    } else {
+      kb.shakeText()
+    }
+  } // END OF: ENTER
 
   const __keyboardLayout: KeyboardLayoutData = {
     [KeyboardLayouts.QWERTY]: {
@@ -254,88 +317,60 @@ namespace microgui {
      */
     [KeyboardLayouts.NUMERIC]: {
       btnTexts: [
-        ["0", "1", "2", "3", "4"],
-        ["5", "6", "7", "8", "9"],
-        [btn_delete, "<-", "-", ".", "ENTER"]
+        ["1", "2", "3", "<-"],
+        ["4", "5", "6", ".", "-"],
+        ["7", "8", "9", "0", "ENTER"]
       ],
-      defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => { // Default Behaviour: Prevent leading zeroes
-        const btnChar = btn.state[0];
-        const txt = kb.getText();
-        const txtLen = txt.length;
-
-        if (txtLen == 0) {
-          kb.appendText(btnChar)
-          return;
-        }
-
-        // Illegal cases: where there's a "0" or a "-0" and you want to add anything except a '.'
-        // The decimal point '.' is allowed via the specialBtnBehaviour.
-        const leadingZeroCase1 = txtLen == 1 && txt[0] == "0";
-        const leadingZeroCase2 = txtLen == 2 && txt[0] == "-" && txt[1] == "0";
-        if (leadingZeroCase1 || leadingZeroCase2)
-          kb.shakeText()
-        else
-          kb.appendText(btnChar)
-
-      }, // End of: default behaviour: Prevent leading zeroes
+      defaultBtnBehaviour: __kbBehaviourNumericDefault,
       specialBtnBehaviours: [
-        {
-          btnRow: 2, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => { // btn_delete
-            kb.deleteFn();
-          }
-        }, // END OF: btn_delete
-        { btnRow: 2, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
-        {
-          btnRow: 2, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => { // Minus symbol: Toggle "-" at the start.
-            const txt = kb.getText();
+        { btnRow: 0, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
+        { btnRow: 1, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericMinus(b, kb) },
+        { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },
+        { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }
+      ]
+    },
 
-            // Remove "-" if its already there:
-            if (txt[0] == btn.state[0])
-              if (txt.length == 1)
-                kb.setText("")
-              else
-                kb.setText(txt.slice(1))
-            else // Add in "-":
-              kb.setText("-" + txt)
-          }
-        }, // END OF: Minus symbol: Toggle "-" at the start.
-        {
-          btnRow: 2, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => { // Decimal point
-            const txt = kb.getText();
-            const len = txt.length;
-            const decimalAlreadyPresent = txt.includes(".")
-            if (len == 0 || txt[len - 1] == "-" || decimalAlreadyPresent)
-              kb.shakeText()
-            else
-              kb.appendText(".")
-          }
-        }, // END OF: Decimal point
-        {
-          btnRow: 2, btnCol: 4, behaviour: (btn: Button, kb: IKeyboard) => { // Enter
-            const txt = kb.getText();
-            const len = txt.length;
-            const lenRule = txt[len - 1] != "-";
-            const noDecimalEnding = txt[len - 1] != ".";
+    /**
+     * Ensures that the user inputs result in a valid number.
+     * E.g: prevents two decimal places, - only at start, etc
+     */
+    [KeyboardLayouts.NUMERIC_POSITIVE_ONLY]: {
+      btnTexts: [
+        ["1", "2", "3", "<-"],
+        ["4", "5", "6", "."],
+        ["7", "8", "9", "0", "ENTER"]
+      ],
+      defaultBtnBehaviour: __kbBehaviourNumericDefault,
+      specialBtnBehaviours: [
+        { btnRow: 0, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) },         // Backspace
+        { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },  // Decimal point
+        { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }     // Enter
+      ]
+    },
 
-            // Handle -0:
-            const txtAsNum: number = +txt;
-
-            if (txtAsNum == 0 || txtAsNum == -0)
-              kb.setText("0")
-
-            if (len > 0 && lenRule && noDecimalEnding) // Last rule could be removed, casting "1." to number is valid.
-              kb.nextScene()
-            else
-              kb.shakeText()
-          }
-        } // END OF: ENTER
+    /**
+     * Same as above, but we have a Trashcan bitmap for a custom delete fn.
+     * This is used by MicroCode; so its DigitWidget (this keyboard) can be deleted like other elements.
+     */
+    [KeyboardLayouts.NUMERIC_WITH_DELETE]: {
+      btnTexts: [
+        ["1", "2", "3", "<-", btn_delete],
+        ["4", "5", "6", ".", "-"],
+        ["7", "8", "9", "0", "ENTER"]
+      ],
+      defaultBtnBehaviour: __kbBehaviourNumericDefault,
+      specialBtnBehaviours: [
+        { btnRow: 0, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) },       // Backspace
+        { btnRow: 0, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() },                      // btn_delete 
+        { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },// Decimal point
+        { btnRow: 1, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericMinus(b, kb) },  // Minus
+        { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }   // Enter
       ]
     }
   };
 
   const KEYBOARD_FRAME_COUNTER_CURSOR_ON = 20;
   export class Keyboard extends CursorScene implements IKeyboard {
-
     private btns: Button[][]
     private text: string;
     private isUpperCase: boolean;
@@ -401,7 +436,6 @@ namespace microgui {
       this.passedBackBtn = (opts.backBtn) ? opts.backBtn : () => { };
     }
 
-
     startup() {
       super.startup()
 
@@ -413,35 +447,61 @@ namespace microgui {
 
       const ySpacing = (this.keyboardBounds.height - charHeight) / (data.btnTexts.length);
 
+      const btnXPositions: number[][] =
+        data.btnTexts.map(row =>
+          row.map((txtOrBitmap: string | Bitmap) => {
+            if (typeof (txtOrBitmap) == "string")
+              // return (charWidth * (txtOrBitmap.length + 1) >> 1);
+              return charWidth * (txtOrBitmap.length + 1);
+            else
+              // return txtOrBitmap.width - (txtOrBitmap.width >> 1);
+              return txtOrBitmap.width - txtOrBitmap.width;
+          })
+        );
+
+      const btnBitmapWidths: number[][] =
+        data.btnTexts.map(row =>
+          row.map((txtOrBitmap: (string | Bitmap)) => {
+            if (typeof (txtOrBitmap) == "string")
+              return (charWidth * txtOrBitmap.length) + (charWidth >> 1);
+            else
+              return txtOrBitmap.width;
+          })
+        );
+
+      const btnXPositionAnchor: number =
+        btnXPositions.map(rowWidth =>
+          rowWidth.reduce((sum: number, current: number) => sum + current, 0)
+        )
+          .reduce((widest: number, current: number) => Math.max(widest, current), 0);
+
+      const longestRowLen = data.btnTexts.map(btnTexts => btnTexts.length).reduce((longest, current) => Math.max(longest, current), 0);
+      // const xSpacing = (this.keyboardBounds.width - btnXPositionAnchor) / (longestRowLen + 1);
+
       for (let row = 0; row < data.btnTexts.length; row++) {
-        const bitmapWidths = data.btnTexts[row].map((txtOrBitmap: string | Bitmap) => {
-          if (typeof (txtOrBitmap) == "string")
-            return charWidth * (txtOrBitmap.length + 1) - 4;
-          else
-            return txtOrBitmap.width + 3;
-        });
+        // const xSpacing = ((this.keyboardBounds.width - btnXPositionAnchor) / (data.btnTexts[row].length + 1));
+        const xSpacing = ((this.keyboardBounds.width - btnXPositionAnchor) / (longestRowLen + 1));
+        // const xSpacing = (this.keyboardBounds.width - btnXPositions[row].reduce((sum, current) => sum + current, 0)) / (data.btnTexts[row].length + 1);
 
-        const totalWidth: number = bitmapWidths.reduce((total: number, w: number) => total + w, 0);
-        const xSpacing = (this.keyboardBounds.width - totalWidth) / (bitmapWidths.length + 2);
+        let x = -Screen.HALF_WIDTH + xSpacing + (data.btnTexts[row].length >> 1);
 
-        let x = -Screen.HALF_WIDTH + xSpacing;
         for (let col = 0; col < data.btnTexts[row].length; col++) {
           const btnState: (string | Bitmap) = data.btnTexts[row][col];
-          const bitmapWidth = bitmapWidths[col]
+          const bitmapWidth = btnBitmapWidths[row][col];
 
-          x += (bitmapWidths[col] + xSpacing) >> 1
+          x += (btnXPositions[row][col] + xSpacing) >> 1
           this.btns[row][col] =
             new Button({
               parent: null,
               style: ButtonStyles.Transparent,
               icon: (typeof (btnState) == "string") ? bitmaps.create(bitmapWidth, charHeight) : btnState,
               ariaId: "",
-              x,
+              x: x,
               y: -(charHeight >> 1) + (ySpacing * row),
               onClick: (btn: Button) => data.defaultBtnBehaviour(btn, this),
-              state: (typeof (btnState) == "string") ? [btnState] : []
+              state: (typeof (btnState) == "string") ? [btnState] : [] // String only btnStates; for default QWERTY and NUMERIC behaviours.
             })
-          x += (bitmapWidths[col] + xSpacing) >> 1
+          x += (btnXPositions[row][col] + xSpacing) >> 1;
         }
       }
 
@@ -453,7 +513,7 @@ namespace microgui {
         }
       )
 
-      context.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => this.passedBackBtn(this.text))
+      context.onEvent(ControllerButtonEvent.Pressed, controller.B.id, () => this.passedBackBtn(this.text));
       this.navigator.setBtns(this.btns);
     }
 
@@ -639,7 +699,8 @@ namespace microgui {
           const btn = this.btns[i][j];
           const btnText = (btn.state.length > 0) ? btn.state[0] : null;
 
-          const x = (screen().width / 2) + btn.xfrm.localPos.x - (btn.icon.width / 2) + 1
+          const X_SHIFT = 3; // small adjustment to get the btnText to line up with the cursor
+          const x = (screen().width / 2) + btn.xfrm.localPos.x - (btn.icon.width / 2) + X_SHIFT
           const y = (screen().height / 2) + btn.xfrm.localPos.y + charHeight - 12
 
           btn.draw()
