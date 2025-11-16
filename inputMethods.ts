@@ -203,8 +203,7 @@ namespace microgui {
   export enum KeyboardLayouts {
     QWERTY,
     NUMERIC,
-    NUMERIC_POSITIVE_ONLY,
-    NUMERIC_WITH_DELETE
+    NUMERIC_POSITIVE_INTEGER,
   }
 
   interface IKeyboard {
@@ -222,11 +221,9 @@ namespace microgui {
   type KeyboardBtnFn = (btn: Button, kb: IKeyboard) => void;
   type SpecialBtnData = { btnRow: number, btnCol: number, behaviour: KeyboardBtnFn };
   type KeyboardLayoutData = {
-    [id: number]: {
       btnTexts: (string | Bitmap)[][],
       defaultBtnBehaviour: KeyboardBtnFn,
       specialBtnBehaviours: SpecialBtnData[]
-    }
   };
 
   const __kbBehaviourNumericDefault: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Default Behaviour: Prevent leading zeroes
@@ -264,7 +261,7 @@ namespace microgui {
   } // END OF: Minus symbol: Toggle "-" at the start.
 
 
-  const __kbBehaviourNumericDeimcal: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Decimal point
+  const __kbBehaviourNumericDecimal: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Decimal point
     const txt = kb.getText();
     const len = txt.length;
     const decimalAlreadyPresent = txt.includes(".")
@@ -291,83 +288,68 @@ namespace microgui {
     }
   } // END OF: ENTER
 
-  const __keyboardLayout: KeyboardLayoutData = {
-    [KeyboardLayouts.QWERTY]: {
-      btnTexts: [
-        ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-        ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-        ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
-        ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
-        ["<-", "^", " _______ ", "ENTER"]
-      ],
-      defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => {
-        kb.appendText(btn.state[0])
-      },
-      specialBtnBehaviours: [
-        { btnRow: 4, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
-        { btnRow: 4, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.swapCase() }, // Change case
-        { btnRow: 4, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => kb.appendText(" ") }, // Spacebar
-        { btnRow: 4, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.nextScene() } // ENTER
-      ]
-    },
+  function __keyboardLayout(layout: KeyboardLayouts, del = false): KeyboardLayoutData  {
+    switch (layout) {
+      case KeyboardLayouts.QWERTY: {
+        const ret: KeyboardLayoutData = {
+          btnTexts: [
+            ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+            ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+            ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
+            ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
+            ["<-", "^", " _______ ", "ENTER"]
+          ],
+          defaultBtnBehaviour: (btn: Button, kb: IKeyboard) => {
+            kb.appendText(btn.state[0])
+          },
+          specialBtnBehaviours: [
+            { btnRow: 4, btnCol: 0, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
+            { btnRow: 4, btnCol: 1, behaviour: (btn: Button, kb: IKeyboard) => kb.swapCase() }, // Change case
+            { btnRow: 4, btnCol: 2, behaviour: (btn: Button, kb: IKeyboard) => kb.appendText(" ") }, // Spacebar
+            { btnRow: 4, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.nextScene() } // ENTER
+          ]
+        }
+        if (del) {
+          ret.btnTexts[4].insertAt(0,btn_delete)
+          ret.specialBtnBehaviours.push({ btnRow: 4, btnCol: 0, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() }) 
+        }
+        return ret
+      }
 
-    /**
-     * Ensures that the user inputs result in a valid number.
-     * E.g: prevents two decimal places, - only at start, etc
-     */
-    [KeyboardLayouts.NUMERIC]: {
-      btnTexts: [
-        ["1", "2", "3", "<-"],
-        ["4", "5", "6", ".", "-"],
-        ["7", "8", "9", "0", "ENTER"]
-      ],
-      defaultBtnBehaviour: __kbBehaviourNumericDefault,
-      specialBtnBehaviours: [
-        { btnRow: 0, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
-        { btnRow: 1, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericMinus(b, kb) },
-        { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },
-        { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }
-      ]
-    },
-
-    /**
-     * Ensures that the user inputs result in a valid number.
-     * E.g: prevents two decimal places, - only at start, etc
-     */
-    [KeyboardLayouts.NUMERIC_POSITIVE_ONLY]: {
-      btnTexts: [
-        ["1", "2", "3", "<-"],
-        ["4", "5", "6", "."],
-        ["7", "8", "9", "0", "ENTER"]
-      ],
-      defaultBtnBehaviour: __kbBehaviourNumericDefault,
-      specialBtnBehaviours: [
-        { btnRow: 0, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) },         // Backspace
-        { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },  // Decimal point
-        { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }     // Enter
-      ]
-    },
-
-    /**
-     * Same as above, but we have a Trashcan bitmap for a custom delete fn.
-     * This is used by MicroCode; so its DigitWidget (this keyboard) can be deleted like other elements.
-     */
-    [KeyboardLayouts.NUMERIC_WITH_DELETE]: {
-      btnTexts: [
-        ["1", "2", "3", "<-", btn_delete],
-        ["4", "5", "6", ".", "-"],
-        ["7", "8", "9", "0", "ENTER"]
-      ],
-      defaultBtnBehaviour: __kbBehaviourNumericDefault,
-      specialBtnBehaviours: [
-        { btnRow: 0, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) },       // Backspace
-        { btnRow: 0, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() },                      // btn_delete 
-        { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },// Decimal point
-        { btnRow: 1, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericMinus(b, kb) },  // Minus
-        { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }   // Enter
-      ]
+      /**
+       * Ensures that the user inputs result in a valid number.
+       * E.g: prevents two decimal places, - only at start, etc
+       */
+      case KeyboardLayouts.NUMERIC_POSITIVE_INTEGER:
+      case KeyboardLayouts.NUMERIC:  {
+        const ret: KeyboardLayoutData = {
+          btnTexts: [
+            ["1", "2", "3", "<-"],
+            ["4", "5", "6" ],
+            ["7", "8", "9", "0", "ENTER"]
+          ],
+          defaultBtnBehaviour: __kbBehaviourNumericDefault,
+          specialBtnBehaviours: [
+            { btnRow: 0, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
+            { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }
+          ]
+        }
+        if (layout == KeyboardLayouts.NUMERIC) {
+          ret.btnTexts[1].push(".")
+          ret.btnTexts[1].push("-")
+          ret.specialBtnBehaviours.push(
+            { btnRow: 1, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericMinus(b, kb) })
+          ret.specialBtnBehaviours.push(
+            { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDecimal(b, kb) })
+        }
+        if (del) {
+          ret.btnTexts[0].push(btn_delete)
+          ret.specialBtnBehaviours.push({ btnRow: 0, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() }) 
+        }
+        return ret
+      }
     }
-  };
+  }
 
   const KEYBOARD_FRAME_COUNTER_CURSOR_ON = 20;
   export class Keyboard extends CursorScene implements IKeyboard {
@@ -432,14 +414,14 @@ namespace microgui {
       this.backgroundColor = (opts.backgroundColor) ? opts.backgroundColor : 6; // Default to blue
 
       this.txtColor = (opts.txtColor) ? opts.txtColor : 1;
-      this.passedDeleteFn = (opts.deleteFn) ? opts.deleteFn : () => { };
+      this.passedDeleteFn = opts.deleteFn
       this.passedBackBtn = (opts.backBtn) ? opts.backBtn : () => { };
     }
 
     startup() {
       super.startup()
 
-      const data = __keyboardLayout[this.keyboardLayout];
+      const data = __keyboardLayout(this.keyboardLayout, this.passedDeleteFn !== undefined);
       this.btns = data.btnTexts.map(_ => []);
 
       const charWidth = bitmaps.font8.charWidth
@@ -550,7 +532,7 @@ namespace microgui {
         : (t: string) => { return t.toLowerCase() }
 
 
-      const specialBtnData: SpecialBtnData[] = __keyboardLayout[this.keyboardLayout].specialBtnBehaviours;
+      const specialBtnData: SpecialBtnData[] = __keyboardLayout(this.keyboardLayout, this.passedDeleteFn !== undefined).specialBtnBehaviours;
       const specialBtnRows: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnRow);
       const specialBtnCols: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnCol);
 
@@ -571,7 +553,8 @@ namespace microgui {
     }
 
     public deleteFn(): void {
-      this.passedDeleteFn(this.text);
+      if (this.passedDeleteFn)
+        this.passedDeleteFn(this.text);
     }
 
     public getText() {
