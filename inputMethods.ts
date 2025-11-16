@@ -271,22 +271,26 @@ namespace microgui {
       kb.appendText(".")
   } // END OF: Decimal point
 
-  const __kbBehaviourNumericEnter: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Enter
-    const txt = kb.getText();
-    const len = txt.length;
-    const lenRule = txt[len - 1] != "-";
-    const noDecimalEnding = txt[len - 1] != "."; // Illegal: 0. , -0. , -10. Okay: -0.00.. and 0.000 (becomes 0 later)
+  const get__kbBehaviourNumericEnter = (layout: KeyboardLayouts)  => {
+    const __kbBehaviourNumericEnter: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Enter
+      const txt = kb.getText();
+      const len = txt.length;
+      const lenRule = txt[len - 1] != "-";
+      const noDecimalEnding = txt[len - 1] != "."; // Illegal: 0. , -0. , -10. Okay: -0.00.. and 0.000 (becomes 0 later)
 
-    if (len > 0 && lenRule && noDecimalEnding) { // Last rule could be removed, casting "1." to number is valid.
-      // Turn -0 and -0.000... into 0 before returning
-      const txtAsNum: number = +txt;
-      if (txtAsNum == 0 || txtAsNum == -0)
-        kb.setText("0")
-      kb.nextScene()
-    } else {
-      kb.shakeText()
-    }
-  } // END OF: ENTER
+      if (len > 0 && lenRule && noDecimalEnding) { // Last rule could be removed, casting "1." to number is valid.
+        // Turn -0 and -0.000... into 0 before returning
+        const txtAsNum: number = +txt;
+        if (txtAsNum == 0 || txtAsNum == -0) 
+          kb.setText(layout == KeyboardLayouts.NUMERIC ? "0" : "1")
+        kb.nextScene()
+      } else {
+        kb.shakeText()
+      }
+      return __kbBehaviourNumericDecimal
+    } // END OF: ENTER
+    return __kbBehaviourNumericEnter
+  }
 
   function __keyboardLayout(layout: KeyboardLayouts, del = false): KeyboardLayoutData  {
     switch (layout) {
@@ -331,7 +335,7 @@ namespace microgui {
           defaultBtnBehaviour: __kbBehaviourNumericDefault,
           specialBtnBehaviours: [
             { btnRow: 0, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
-            { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }
+            { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => get__kbBehaviourNumericEnter(layout)(b, kb) }
           ]
         }
         if (layout == KeyboardLayouts.NUMERIC) {
