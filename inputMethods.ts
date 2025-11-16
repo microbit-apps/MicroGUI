@@ -414,14 +414,14 @@ namespace microgui {
       this.backgroundColor = (opts.backgroundColor) ? opts.backgroundColor : 6; // Default to blue
 
       this.txtColor = (opts.txtColor) ? opts.txtColor : 1;
-      this.passedDeleteFn = (opts.deleteFn) ? opts.deleteFn : () => { };
+      this.passedDeleteFn = opts.deleteFn
       this.passedBackBtn = (opts.backBtn) ? opts.backBtn : () => { };
     }
 
     startup() {
       super.startup()
 
-      const data = __keyboardLayout(this.keyboardLayout);
+      const data = __keyboardLayout(this.keyboardLayout, this.passedDeleteFn !== undefined);
       this.btns = data.btnTexts.map(_ => []);
 
       const charWidth = bitmaps.font8.charWidth
@@ -532,7 +532,7 @@ namespace microgui {
         : (t: string) => { return t.toLowerCase() }
 
 
-      const specialBtnData: SpecialBtnData[] = __keyboardLayout(this.keyboardLayout).specialBtnBehaviours;
+      const specialBtnData: SpecialBtnData[] = __keyboardLayout(this.keyboardLayout, this.passedDeleteFn !== undefined).specialBtnBehaviours;
       const specialBtnRows: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnRow);
       const specialBtnCols: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnCol);
 
@@ -553,7 +553,8 @@ namespace microgui {
     }
 
     public deleteFn(): void {
-      this.passedDeleteFn(this.text);
+      if (this.passedDeleteFn)
+        this.passedDeleteFn(this.text);
     }
 
     public getText() {
