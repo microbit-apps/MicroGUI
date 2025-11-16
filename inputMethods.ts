@@ -203,7 +203,7 @@ namespace microgui {
   export enum KeyboardLayouts {
     QWERTY,
     NUMERIC,
-    NUMERIC_POSITIVE_ONLY,
+    NUMERIC_POSITIVE_INTEGER,
   }
 
   interface IKeyboard {
@@ -261,7 +261,7 @@ namespace microgui {
   } // END OF: Minus symbol: Toggle "-" at the start.
 
 
-  const __kbBehaviourNumericDeimcal: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Decimal point
+  const __kbBehaviourNumericDecimal: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Decimal point
     const txt = kb.getText();
     const len = txt.length;
     const decimalAlreadyPresent = txt.includes(".")
@@ -309,6 +309,10 @@ namespace microgui {
             { btnRow: 4, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.nextScene() } // ENTER
           ]
         }
+        if (del) {
+          ret.btnTexts[4].insertAt(0,btn_delete)
+          ret.specialBtnBehaviours.push({ btnRow: 4, btnCol: 0, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() }) 
+        }
         return ret
       }
 
@@ -316,46 +320,31 @@ namespace microgui {
        * Ensures that the user inputs result in a valid number.
        * E.g: prevents two decimal places, - only at start, etc
        */
+      case KeyboardLayouts.NUMERIC_POSITIVE_INTEGER:
       case KeyboardLayouts.NUMERIC:  {
         const ret: KeyboardLayoutData = {
           btnTexts: [
             ["1", "2", "3", "<-"],
-            ["4", "5", "6", ".", "-"],
+            ["4", "5", "6" ],
             ["7", "8", "9", "0", "ENTER"]
           ],
           defaultBtnBehaviour: __kbBehaviourNumericDefault,
           specialBtnBehaviours: [
             { btnRow: 0, btnCol: 3, behaviour: (btn: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) }, // Backspace
-            { btnRow: 1, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericMinus(b, kb) },
-            { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },
             { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }
           ]
         }
+        if (layout == KeyboardLayouts.NUMERIC) {
+          ret.btnTexts[1].push(".")
+          ret.btnTexts[1].push("-")
+          ret.specialBtnBehaviours.push(
+            { btnRow: 1, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericMinus(b, kb) })
+          ret.specialBtnBehaviours.push(
+            { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDecimal(b, kb) })
+        }
         if (del) {
           ret.btnTexts[0].push(btn_delete)
-          ret.specialBtnBehaviours.insertAt(1,
-          { btnRow: 0, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() })                   // btn_delete 
-        }
-        return ret
-      }
-
-      /**
-       * Ensures that the user inputs result in a valid number.
-       * E.g: prevents two decimal places, - only at start, etc
-       */
-      case KeyboardLayouts.NUMERIC_POSITIVE_ONLY: {
-        const ret: KeyboardLayoutData = {
-          btnTexts: [
-            ["1", "2", "3", "<-"],
-            ["4", "5", "6", "."],
-            ["7", "8", "9", "0", "ENTER"]
-          ],
-          defaultBtnBehaviour: __kbBehaviourNumericDefault,
-          specialBtnBehaviours: [
-            { btnRow: 0, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => kb.deletePriorCharacters(1) },         // Backspace
-            { btnRow: 1, btnCol: 3, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericDeimcal(b, kb) },  // Decimal point
-            { btnRow: 2, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => __kbBehaviourNumericEnter(b, kb) }     // Enter
-          ]
+          ret.specialBtnBehaviours.push({ btnRow: 0, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() }) 
         }
         return ret
       }
