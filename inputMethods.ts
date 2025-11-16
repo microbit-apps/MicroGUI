@@ -277,8 +277,10 @@ namespace microgui {
       const len = txt.length;
       const lenRule = txt[len - 1] != "-";
       const noDecimalEnding = txt[len - 1] != "."; // Illegal: 0. , -0. , -10. Okay: -0.00.. and 0.000 (becomes 0 later)
+      const noZeroPosInt = txt === "0"
 
-      if (len > 0 && lenRule && noDecimalEnding) { // Last rule could be removed, casting "1." to number is valid.
+      if (len > 0 && (layout == KeyboardLayouts.NUMERIC && lenRule && noDecimalEnding || 
+                      layout == KeyboardLayouts.NUMERIC_POSITIVE_INTEGER && noZeroPosInt)) { // Last rule could be removed, casting "1." to number is valid.
         // Turn -0 and -0.000... into 0 before returning
         const txtAsNum: number = +txt;
         if (txtAsNum == 0 || txtAsNum == -0) 
