@@ -221,9 +221,9 @@ namespace microgui {
   type KeyboardBtnFn = (btn: Button, kb: IKeyboard) => void;
   type SpecialBtnData = { btnRow: number, btnCol: number, behaviour: KeyboardBtnFn };
   type KeyboardLayoutData = {
-      btnTexts: (string | Bitmap)[][],
-      defaultBtnBehaviour: KeyboardBtnFn,
-      specialBtnBehaviours: SpecialBtnData[]
+    btnTexts: (string | Bitmap)[][],
+    defaultBtnBehaviour: KeyboardBtnFn,
+    specialBtnBehaviours: SpecialBtnData[]
   };
 
   const __kbBehaviourNumericDefault: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Default Behaviour: Prevent leading zeroes
@@ -271,13 +271,13 @@ namespace microgui {
       kb.appendText(".")
   } // END OF: Decimal point
 
+  // These are legal: 0. -0. they both just become 0
   const __kbBehaviourNumericEnter: KeyboardBtnFn = (btn: Button, kb: IKeyboard) => { // Enter
     const txt = kb.getText();
     const len = txt.length;
     const lenRule = txt[len - 1] != "-";
-    const noDecimalEnding = txt[len - 1] != "."; // Illegal: 0. , -0. , -10. Okay: -0.00.. and 0.000 (becomes 0 later)
 
-    if (len > 0 && lenRule && noDecimalEnding) { // Last rule could be removed, casting "1." to number is valid.
+    if (len > 0 && lenRule) {
       // Turn -0 and -0.000... into 0 before returning
       const txtAsNum: number = +txt;
       if (txtAsNum == 0 || txtAsNum == -0)
@@ -288,7 +288,7 @@ namespace microgui {
     }
   } // END OF: ENTER
 
-  function __keyboardLayout(layout: KeyboardLayouts, del = false): KeyboardLayoutData  {
+  function __keyboardLayout(layout: KeyboardLayouts, del = false): KeyboardLayoutData {
     switch (layout) {
       case KeyboardLayouts.QWERTY: {
         const ret: KeyboardLayoutData = {
@@ -310,8 +310,8 @@ namespace microgui {
           ]
         }
         if (del) {
-          ret.btnTexts[4].insertAt(0,btn_delete)
-          ret.specialBtnBehaviours.push({ btnRow: 4, btnCol: 0, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() }) 
+          ret.btnTexts[4].insertAt(0, btn_delete)
+          ret.specialBtnBehaviours.push({ btnRow: 4, btnCol: 0, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() })
         }
         return ret
       }
@@ -321,11 +321,11 @@ namespace microgui {
        * E.g: prevents two decimal places, - only at start, etc
        */
       case KeyboardLayouts.NUMERIC_POSITIVE_INTEGER:
-      case KeyboardLayouts.NUMERIC:  {
+      case KeyboardLayouts.NUMERIC: {
         const ret: KeyboardLayoutData = {
           btnTexts: [
             ["1", "2", "3", "<-"],
-            ["4", "5", "6" ],
+            ["4", "5", "6"],
             ["7", "8", "9", "0", "ENTER"]
           ],
           defaultBtnBehaviour: __kbBehaviourNumericDefault,
@@ -344,7 +344,7 @@ namespace microgui {
         }
         if (del) {
           ret.btnTexts[0].push(btn_delete)
-          ret.specialBtnBehaviours.push({ btnRow: 0, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() }) 
+          ret.specialBtnBehaviours.push({ btnRow: 0, btnCol: 4, behaviour: (b: Button, kb: IKeyboard) => kb.deleteFn() })
         }
         return ret
       }
@@ -534,7 +534,6 @@ namespace microgui {
 
       const specialBtnData: SpecialBtnData[] = __keyboardLayout(this.keyboardLayout, this.passedDeleteFn !== undefined).specialBtnBehaviours;
       const specialBtnRows: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnRow);
-      const specialBtnCols: number[] = specialBtnData.map((sbd: SpecialBtnData) => sbd.btnCol);
 
       const isSpecialBtn = (row: number, col: number): boolean => {
         return (specialBtnRows.indexOf(row) != -1) && (specialBtnRows.indexOf(col) != -1);
