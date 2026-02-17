@@ -7,7 +7,7 @@
         "radio": "*",
         "microphone": "*",
         "datalogger": "*",
-        "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.33"
+        "user-interface-base": "github:microbit-apps/user-interface-base#v0.0.34"
     },
     "files": [
         "app.ts",
@@ -26,10 +26,5 @@
     "supportedTargets": [
         "microbit"
     ],
-    "yotta": {
-        "config": {
-            "DEVICE_BLE": 0
-        }
-    },
     "preferredEditor": "blocksprj"
 }
