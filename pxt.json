@@ -26,5 +26,10 @@
     "supportedTargets": [
         "microbit"
     ],
+    "yotta": {
+        "config": {
+            "DEVICE_BLE": 0
+        }
+    },
     "preferredEditor": "blocksprj"
 }
