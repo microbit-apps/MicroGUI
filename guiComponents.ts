@@ -392,6 +392,20 @@ namespace microgui {
             }
         }
 
+        /**
+         * This checking and conversion is inadequate.
+         * Should: check all types of each element in ctx
+         */
+        addContext(ctx: any[]) {
+            if (ctx == null || ctx.length == 0) {
+                this.textChunks = [""]
+            } else if (typeof (ctx[0]) !== 'string') {
+                // throw ""
+            } else {
+                this.textChunks = ctx;
+            }
+        }
+
         draw() {
             super.draw()
             // this.printCenter(this.text)
@@ -1782,4 +1796,3 @@ namespace microgui {
         }
     }
 }
-

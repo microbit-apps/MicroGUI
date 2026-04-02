@@ -1,3 +1,4 @@
+
 namespace microcode {
   import Scene = user_interface_base.Scene
   import SceneManager = user_interface_base.SceneManager
@@ -20,37 +21,58 @@ namespace microcode {
   control.singleSimulator();
   const app = new App();
 
+  const simpleTextComponent: microgui.GUIComponentAbstract = new TextBox({
+    alignment: GUIComponentAlignment.BOT,
+    isActive: false,
+    title: "Title Text :)", // optional arg
+    text: ["Press micro:bit A btn"], // optional arg
+    colour: 6, // optional arg
+    xScaling: 1.7, // optional arg
+  })
+
+
+  let count = 0;
+  input.onButtonPressed(1, function () {
+    count++;
+    simpleTextComponent.clearContext()
+    simpleTextComponent.addContext(["" + count])
+  })
+
+  const gcs = new GUIComponentScene({ app, components: [simpleTextComponent] })
+  app.pushScene(gcs)
+
   // Comment out the examples you aren't using:
 
   // Example 0:
-  const kb = new microgui.Keyboard({
-    app,
-    layout: microgui.KeyboardLayouts.NUMERIC,
-    cb: (txt: string) => { basic.showString(txt) },
-    foregroundColor: 2,                              // optional arg
-    backgroundColor: 6,                              // optional arg
-    defaultTxt: "0",                                 // optional arg
-    maxTxtLength: 6,                                 // optional arg
-    txtColor: 1,                                     // optional arg
-    deleteFn: () => basic.showString("Bye"),     // optional arg
-    backBtn: () => basic.showNumber(2)
-  });
+  //   const kb = new microgui.Keyboard({
+  //     app,
+  //     layout: microgui.KeyboardLayouts.NUMERIC,
+  //     cb: (txt: string) => { basic.showString(txt) },
+  //     foregroundColor: 2,                              // optional arg
+  //     backgroundColor: 6,                              // optional arg
+  //     defaultTxt: "0",                                 // optional arg
+  //     maxTxtLength: 6,                                 // optional arg
+  //     txtColor: 1,                                     // optional arg
+  //     deleteFn: () => basic.showString("Bye"),     // optional arg
+  //     backBtn: () => basic.showNumber(2)
+  //   });
 
-  app.popScene();
-  app.pushScene(kb);
+  //   app.popScene();
+  //   app.pushScene(kb);
+
   // Example 1a:
 
-  // const simpleTextComponent = new TextBox({
-  //     alignment: GUIComponentAlignment.BOT,
-  //     isActive: false,
-  //     title: "Title Text :)", // optional arg
-  //     text: ["Hello there,", "I hope you are well.", "Isn't this neat?"], // optional arg
-  //     colour: 6, // optional arg
-  //     xScaling: 1.7, // optional arg
-  // })
+  //   const simpleTextComponent = new TextBox({
+  //       alignment: GUIComponentAlignment.BOT,
+  //       isActive: false,
+  //       title: "Title Text :)", // optional arg
+  //       text: ["Hello there,", "I hope you are well.", "Isn't this neat?"], // optional arg
+  //       colour: 6, // optional arg
+  //       xScaling: 1.7, // optional arg
+  //   })
 
-  // const gcs = new GUIComponentScene({ app, components: [simpleTextComponent] })
-  // app.pushScene(gcs)
+  //   const gcs = new GUIComponentScene({ app, components: [simpleTextComponent] })
+  //   app.pushScene(gcs)
 
 
 
@@ -138,7 +160,7 @@ namespace microcode {
 
 
 
-  
+
   // const buttonCollection = new ButtonCollection({
   //   alignment: GUIComponentAlignment.TOP,
   //   btns: [
@@ -248,4 +270,5 @@ namespace microcode {
   // const gcs = new GUIComponentScene({ app, components: [rbc] });
   // app.pushScene(gcs);
 }
+
 
