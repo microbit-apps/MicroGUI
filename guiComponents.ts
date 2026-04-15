@@ -338,12 +338,14 @@ namespace microgui {
 
   /**
    * Component that contains a Title + a chunk of text.
+   * Modify the public .title and .text to change.
+   * .text is a string[]. Each string is printed on a different line.
    */
   //% autoCreate=microgui.createTextBox color=#5F7FF0
   export class TextBox extends GUIComponentAbstract {
-    private title: string;
-    private maxCharactersPerLine: number;
-    private textChunks: string[];
+    public title: string;
+    public maxCharactersPerLine: number;
+    public text: string[];
 
     constructor(opts: {
       alignment: GUIComponentAlignment,
@@ -376,19 +378,19 @@ namespace microgui {
       this.maxCharactersPerLine = this.width / (font.charWidth + 1)
 
       if (opts.text == null) {
-        this.textChunks = [""]
+        this.text = [""]
       }
 
       else if (typeof (opts.text) === 'string') {
-        this.textChunks = [];
+        this.text = [];
 
         for (let i = 0; i < opts.text.length; i += this.maxCharactersPerLine) {
-          this.textChunks.push(opts.text.slice(i, i + this.maxCharactersPerLine));
+          this.text.push(opts.text.slice(i, i + this.maxCharactersPerLine));
         }
       }
 
       else {
-        this.textChunks = opts.text
+        this.text = opts.text
       }
     }
 
@@ -398,11 +400,11 @@ namespace microgui {
      */
     addContext(ctx: any[]) {
       if (ctx == null || ctx.length == 0) {
-        this.textChunks = [""]
+        this.text = [""]
       } else if (typeof (ctx[0]) !== 'string') {
         // throw ""
       } else {
-        this.textChunks = ctx;
+        this.text = ctx;
       }
     }
 
@@ -420,7 +422,7 @@ namespace microgui {
 
 
       let yOffset = 12;
-      this.textChunks.forEach(textChunk => {
+      this.text.forEach(textChunk => {
         const textOffset = (font.charWidth * textChunk.length) >> 1
         screen().print(
           textChunk,

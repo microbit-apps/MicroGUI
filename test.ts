@@ -28,8 +28,9 @@ namespace microcode {
     text: ["Press micro:bit A btn"], // optional arg
     colour: 6, // optional arg
     xScaling: 1.7, // optional arg
-  })
+  });
 
+  (simpleTextComponent as TextBox).title = "hi";
 
   let count = 0;
   input.onButtonPressed(1, function () {
