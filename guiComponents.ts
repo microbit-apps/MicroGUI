@@ -1,6 +1,3 @@
-
-
-
 //% block="MicroGUI" weight=100, color=#000A83
 namespace microgui {
   import AppInterface = user_interface_base.AppInterface
@@ -1376,15 +1373,14 @@ namespace microgui {
       components
     });
   }
-
   /**
    * Holds other components,
    * One component is active at a time
    */
   //% color=#40BF24
   export class GUIComponentScene extends Scene {
-    private components: GUIComponentAbstract[];
-    private currentComponentID: number;
+    public components: GUIComponentAbstract[];
+    public currentComponentID: number;
 
     constructor(opts: {
       app: AppInterface,
@@ -1400,40 +1396,38 @@ namespace microgui {
       this.currentComponentID = 0
     }
 
-    public addComponents(newComponents: GUIComponentAbstract[]) {
-      this.components = this.components.concat(newComponents)
-
-      if (this.components.length == newComponents.length) {
-        this.components[this.currentComponentID].makeActive()
-      }
+    startup() {
+      super.startup()
     }
 
-    public activate() {
+    /**
+    * Activates the scene, makes the last component in the components array active.
+    */
+    activate() {
       super.activate();
       if (this.components.length > 0)
         this.components[this.currentComponentID].makeActive()
     }
 
-    public deactivate() {
+    deactivate() {
       super.activate();
 
       this.components[this.currentComponentID].hide()
       this.components[this.currentComponentID].unmakeActive()
     }
 
+    /**
+    * Make component at index commponentID active, if hide others is true, the other components will not be drawn.
+    */
     public makeComponentActive(componentID: number, hideOthers: boolean) {
       this.currentComponentID = componentID;
       this.focus(hideOthers);
     }
 
-    public updateComponentsContext(componentID: number, context: any[]) {
-      this.components[componentID].addContext(context)
-    }
-
-    /* override */ startup() {
-      super.startup()
-    }
-
+    /**
+    * Makes the component at this.currentComponentID unhidden and active.
+    *@param hideOthers if true other components will have .hide() invoked on them.
+    */
     private focus(hideOthers: boolean) {
       if (hideOthers)
         this.components.forEach(component => { component.hide() })
@@ -1443,12 +1437,11 @@ namespace microgui {
       this.components[this.currentComponentID].makeActive()
     }
 
-    showAllComponents() {
+    /**
+    * Helper method: call .unHide on all components.
+    */
+    public showAllComponents() {
       this.components.forEach(component => component.unHide())
-    }
-
-    public getComponents(): GUIComponentAbstract[] {
-      return this.components
     }
 
     draw() {
