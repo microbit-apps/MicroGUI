@@ -118,7 +118,7 @@ namespace microcode {
   //     colour: 2,
   // })
 
-  // gcs.addComponents([comp1, comp2])
+  // gcs.components = [comp1, comp2]
   // app.pushScene(gcs)
 
 

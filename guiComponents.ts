@@ -1430,7 +1430,7 @@ namespace microgui {
       this.components[componentID].addContext(context)
     }
 
-        /* override */ startup() {
+    /* override */ startup() {
       super.startup()
     }
 
